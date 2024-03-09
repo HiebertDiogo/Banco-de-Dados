@@ -1,0 +1,106 @@
+import psycopg2
+
+class Bd_postgres:
+    def __init__(self, dbname, user, password, host, port):
+        self.dbname = dbname
+        self.user = user
+        self.password = password
+        self.host = host
+        self.port = port
+        self.connection = psycopg2.connect(
+            dbname=dbname, user=user, password=password, host=host, port=port
+        )
+        self.cursor = self.connection.cursor()
+
+    def disconnect(self):
+        if self.connection is not None:
+            self.cursor.close()
+            self.connection.close()
+    
+    def columns_table(self, table_postgres):
+        try:
+            query = f"SELECT column_name FROM information_schema.columns WHERE table_name = %s"
+            self.cursor.execute(query, (table_postgres))
+            columns = [row[0] for row in self.cursor.fetchall()]
+            return columns
+        except psycopg2.Error as e:
+            print(e)
+            return None
+
+    def inserir(self, table_postgres, values):
+        try:
+            columns = self.columns_table(table_postgres)
+            query = f"INSERT INTO {table_postgres} ({', '.join(columns)}) VALUES ({', '.join(['%s']*len(values))}) "
+            self.cursor.execute(query, values)
+            self.connection.commit()
+            
+            print("Registro inserido com sucesso!")
+        except psycopg2.Error as e:
+            print(e)
+
+    def search_name(self, table_postgres, name):
+        try:
+            query = f"SELECT * FROM {table_postgres} WHERE nome = %s"
+            self.cursor.execute(query, (name))
+            data = self.cursor.fetchall()
+            if data:
+                for d in data:
+                    print(d)
+            else:
+                print("Nenhum registro encontrado com esse nome.")
+        except psycopg2.Error as e:
+            print(e)
+
+    def delete(self, table_postgres, column_name, column_value):
+        try:
+            query = f"DELETE FROM {table_postgres} WHERE {column_name} = %s"
+            self.cursor.execute(query, (column_value))
+            self.connection.commit()
+            print("Registro removido com sucesso!")
+        except psycopg2.Error as e:
+            print(e)
+
+    def select(self, table_postgres):
+        try:
+            query = f"SELECT * FROM {table_postgres}"
+            self.cursor.execute(query)
+            data = self.cursor.fetchall()
+            if data:
+                for d in data:
+                    print(d)
+            else:
+                print("Nenhum registro encontrado.")
+        except psycopg2.Error as e:
+            print(e)
+
+    def select_where(self, table_postgres, column_name, column_value):
+        try:
+            query = f"SELECT * FROM {table_postgres} WHERE {column_name} = %s"
+            self.cursor.execute(query, (column_value))
+            data = self.cursor.fetchone()
+            if data:
+                print(data)
+            else:
+                print("Nenhum registro encontrado com esse ID.")
+        except psycopg2.Error as e:
+            print(e)
+            
+    def update(self, tabela, id_registro, valores):
+        try:
+            columns = self.columns_table(tabela)
+            set_clause = ", ".join([f"{column} = %s" for column in columns])
+            query = f"UPDATE {tabela} SET {set_clause} WHERE id = %s"
+            self.cursor.execute(query, valores + [id_registro])
+            self.connection.commit()
+            print("Registro alterado com sucesso!")
+        except psycopg2.Error as e:
+            print(e)
+            
+if __name__ == "__main__":
+    db = Bd_postgres(
+        dbname="nome_do_banco",
+        user="usuario",
+        password="senha",
+        host="localhost",
+        port="5432",
+    )
