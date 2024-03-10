@@ -12,23 +12,28 @@ bd = Bd_postgres(
 
 bd.create_tables()
 
-
-bd.inserir("clients", ("Diogo", "@gmail.com", "23/09/2001", "048", "123"))
-
+data_nasc = dt.strptime("23/09/2001", "%d/%m/%Y").date()
 
 
+# Inseriondo na Tabela de Clientes
+# bd.inserir("clients", (data_nasc, "Diogo", "@gmail.com", "048", "123")) # Como está sendo
+# bd.inserir("clients", ("Diogo", "@gmail.com", data_nasc, "048", "123")) # Como deveria ser
 
-# id_cliente = bd.search_client_id(cpf, senha)
+id_cliente = bd.search_client_id(("048", "123"))
 
-
+    
 # ticker = input("Ativo: ").upper()
 # op = input("Operação (c/v): ").lower()
-# quant = input("Quantidade: ")
+# quant = int(input("Quantidade: "))
 # pMedio = float(input("Preço Médio: "))
 # tt = quant * pMedio
 
+bd.select("clients")
 
-# bd.inserir("operations", (dt.now().strftime("%d/%m/%Y"), id_cliente, ticker, op, quant, pMedio, tt ))
+# Inserindo na Tabela de operacao
+# bd.inserir("operations", (dt.now().strftime("%d/%m/%Y"), id_cliente, ticker, op, quant, pMedio, tt)) # Como deveria ser
+# bd.inserir("operations", (dt.now().strftime("%d/%m/%Y"), id_cliente, pMedio, tt, quant, ticker, op))  # Como está sendo
+
 
 
 

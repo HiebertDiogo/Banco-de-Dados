@@ -31,7 +31,8 @@ class Bd_postgres:
     def columns_table(self, table_postgres):
         try:
             query = f"SELECT column_name FROM information_schema.columns WHERE table_name = %s"
-            self.cursor.execute(query, (table_postgres))
+            print(query)
+            self.cursor.execute(query, (table_postgres,))
             columns = [row[0] for row in self.cursor.fetchall()]
             return columns
         
@@ -68,11 +69,11 @@ class Bd_postgres:
             print(e)
 #
     
-    def search_client_id(self, cpf, password):
+    def search_client_id(self, values):
         try:
-            query = f"SELECT * FROM clients WHERE cpf = %s AND password = %s"
-            self.cursor.execute(query, (cpf, password))
-            data = self.cursor.fetchall()
+            query = f"SELECT id_cliente FROM clients WHERE cpf = %s AND senha = %s"
+            self.cursor.execute(query, values)
+            data = self.cursor.fetchone()
             if data:
                 return data[0]
             else:
