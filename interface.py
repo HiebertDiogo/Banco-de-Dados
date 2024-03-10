@@ -104,23 +104,23 @@ def mostrar_resultados(id_cliente):
 def sair():
     print("Você saiu da sua carteira com sucesso. Até a próxima!")
 
-def main():
-    while True:
-        menu_principal()
-        opcao = input("Escolha uma opção: ")
+# def main():
+#     while True:
+#         menu_principal()
+#         opcao = input("Escolha uma opção: ")
 
-        if opcao == "1":
-            cadastro()
-        elif opcao == "2":
-            id_cliente = login()
-            if id_cliente:
-                menu_carteira(id_cliente)
-        elif opcao == "3":
-            sair()
-            bd.disconnect()
-            break
-        else:
-            print("Opção inválida. Tente novamente.\n")
+#         if opcao == "1":
+#             cadastro()
+#         elif opcao == "2":
+#             id_cliente = login()
+#             if id_cliente:
+#                 menu_carteira(id_cliente)
+#         elif opcao == "3":
+#             sair()
+#             bd.disconnect()
+#             break
+#         else:
+#             print("Opção inválida. Tente novamente.\n")
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
