@@ -64,7 +64,7 @@ def menu_carteira(id_cliente):
         elif opcao == "3":
             mostrar_resultados(id_cliente)
         elif opcao == "4":
-            sair(id_cliente)
+            sair()
         else:
             print("Opção inválida. Tente novamente.\n")
 
