@@ -92,8 +92,14 @@ def operacao_venda(id_cliente):
 
 def mostrar_resultados(id_cliente):
     print("\nResultados:")
-    # Implementar exibição de resultados
-    # Você pode usar as funções da classe Bd_postgres para recuperar e exibir os resultados aqui
+    # Mostrar informações da carteira do cliente
+    carteira = bd.select_where("wallets", "id_cliente", id_cliente)
+    if carteira:
+        print("\nInformações da carteira:")
+        for registro in carteira:
+            print(f"Ativo: {registro['ticker']}, Quantidade: {registro['Quant']}, Preço Médio: R${registro['P_Medio']:.2f}")
+    else:
+        print("Você não possui ativos na carteira.")
 
 def sair():
     print("Você saiu da sua carteira com sucesso. Até a próxima!")
