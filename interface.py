@@ -16,23 +16,37 @@ def menu_principal():
     print("2. Login")
     print("3. Sair")
 
+
 def cadastro():
     print("\nCadastro:")
     # Solicita informações do usuário para cadastro no banco
     name = input("Nome: ").upper()
     email = input("Email: ")
-    data_input = input("Data de Nascimento (DD/MM/AAAA): ")
-    try:
-        birth = dt.strptime(data_input, "%d/%m/%Y")
-    except ValueError:
-        print("Formato de data inválido. Certifique-se de usar o formato DD/MM/AAAA.")
-        return
+
+####CORRIGIR
+    while not ValueError:
+        data_input = input("Data de Nascimento (DD/MM/AAAA): ")
+        try:
+            birth = dt.strptime(data_input, "%d/%m/%Y")
+        except ValueError:
+            print("Formato de data inválido. Certifique-se de usar o formato DD/MM/AAAA.\n")
+
     cpf = input("CPF: ")
+
+#### Ou return ou o usuario insere outro CPF?
+    if bd.search_cpf == None:
+        print("Esse CPF já foi cadastrado")
+        return
+
     senha = input("Senha: ")
 
     # Insere as informações no banco de dados
     bd.inserir("clients", (birth, name, email, cpf, senha))
     print("Cadastro realizado com sucesso!\n")
+
+    # Após o Cadastro, o cliente entra na sua carteira
+    menu_carteira(bd.search_client_id((cpf, senha)))
+
 
 def login():
     # Solicita as credenciais do cliente para login
@@ -46,6 +60,7 @@ def login():
     else:
         print("CPF ou senha incorretos.\n")
         return None
+    
 
 def menu_carteira(id_cliente):
     while True:
@@ -55,40 +70,34 @@ def menu_carteira(id_cliente):
         print("3. Mostrar Resultados")
         print("4. Sair")
 
-        opcao = input("Escolha uma opção: ")
+        opcao = int(input("Escolha uma opção: "))
 
-        if opcao == "1":
-            operacao_compra(id_cliente)
-        elif opcao == "2":
-            operacao_venda(id_cliente)
-        elif opcao == "3":
+        if opcao == 1:
+            operacao(id_cliente, opcao)
+        elif opcao == 2:
+            operacao(id_cliente, opcao)
+        elif opcao == 3:
             mostrar_resultados(id_cliente)
-        elif opcao == "4":
-            sair()
+        elif opcao == 4:
+            print("Você saiu da sua carteira com sucesso. Até a próxima!\n")
+            break
         else:
             print("Opção inválida. Tente novamente.\n")
 
-def operacao_compra(id_cliente):
-    print("\nOperação de Compra:")
+
+def operacao(id_cliente, op):
+    operacao = "Compra" if op == 1 else "Venda"
+
+    print(f"\nOperação de {operacao}:")
     ticker = input("Ativo: ").upper()
     quant = int(input("Quantidade: "))
     pMedio = float(input("Preço Médio: "))
     tt = quant * pMedio
 
-    # Inserir operação no banco de dados
-    bd.inserir("operations", (dt.now().strftime("%d/%m/%Y"), id_cliente, ticker, "compra", quant, pMedio, tt))
-    print("Compra realizada com sucesso!\n")
+    # Inserir operação no banco de dados (BAGUNÇADO)
+    bd.inserir("operations", (dt.now().date(), id_cliente, pMedio, quant, tt, ticker, operacao[0]))
+    print(f"{operacao} cadastrada com sucesso!\n")
 
-def operacao_venda(id_cliente):
-    print("\nOperação de Venda:")
-    ticker = input("Ativo: ").upper()
-    quant = int(input("Quantidade: "))
-    pMedio = float(input("Preço Médio: "))
-    tt = quant * pMedio
-
-    # Inserir operação no banco de dados
-    bd.inserir("operations", (dt.now().strftime("%d/%m/%Y"), id_cliente, ticker, "venda", quant, pMedio, tt))
-    print("Venda realizada com sucesso!\n")
 
 def mostrar_resultados(id_cliente):
     print("\nResultados:")
@@ -101,26 +110,24 @@ def mostrar_resultados(id_cliente):
     else:
         print("Você não possui ativos na carteira.")
 
-def sair():
-    print("Você saiu da sua carteira com sucesso. Até a próxima!")
 
-# def main():
-#     while True:
-#         menu_principal()
-#         opcao = input("Escolha uma opção: ")
+def main():
+    while True:
+        menu_principal()
+        opcao = int(input("Escolha uma opção: "))
 
-#         if opcao == "1":
-#             cadastro()
-#         elif opcao == "2":
-#             id_cliente = login()
-#             if id_cliente:
-#                 menu_carteira(id_cliente)
-#         elif opcao == "3":
-#             sair()
-#             bd.disconnect()
-#             break
-#         else:
-#             print("Opção inválida. Tente novamente.\n")
+        if opcao == 1:
+            cadastro()
 
-# if __name__ == "__main__":
-#     main()
+        elif opcao == 2:
+            id_cliente = login()
+            if id_cliente:
+                menu_carteira(id_cliente)
+
+        elif opcao == 3:
+            print("Finalizando o Programa")
+            bd.disconnect()
+            break
+        
+        else:
+            print("Opção inválida. Tente novamente.\n")

@@ -1,5 +1,5 @@
 operations_table = """ CREATE TABLE IF NOT EXISTS operations (
-                        id_compra SERIAL PRIMARY KEY,
+                        id_operacao SERIAL PRIMARY KEY,
                         data DATE,
                         id_cliente INT,
                         ticker TEXT NOT NULL,

@@ -47,23 +47,20 @@ class Bd_postgres:
             query = f"INSERT INTO {table_postgres} ({', '.join(columns)}) VALUES ({', '.join(['%s']*len(values))}) "
             self.cursor.execute(query, values)
             self.connection.commit()
-            
-            print("Registro inserido com sucesso!")
 
         except psycopg2.Error as e:
             print(e)
 
     
-    def search_name(self, table_postgres, name):
+    def search_cpf(self, table_postgres, cpf):
         try:
             query = f"SELECT * FROM {table_postgres} WHERE nome = %s"
-            self.cursor.execute(query, (name))
-            data = self.cursor.fetchall()
+            self.cursor.execute(query, cpf)
+            data = self.cursor.fetchone()
             if data:
-                for d in data:
-                    print(d)
+                return data[0]
             else:
-                print("Nenhum registro encontrado com esse nome.")
+                return None
 
         except psycopg2.Error as e:
             print(e)

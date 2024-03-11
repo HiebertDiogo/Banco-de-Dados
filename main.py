@@ -1,7 +1,4 @@
-from interface import menu_principal
-
-def main():
-    menu_principal()
+from interface import main
 
 if __name__ == "__main__":
     main()
