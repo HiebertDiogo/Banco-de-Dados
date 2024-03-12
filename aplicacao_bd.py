@@ -30,8 +30,7 @@ class Bd_postgres:
     
     def columns_table(self, table_postgres):
         try:
-            query = f"SELECT column_name FROM information_schema.columns WHERE table_name = %s"
-            print(query)
+            query = f"SELECT column_name FROM information_schema.columns WHERE table_name = %s ORDER BY ORDINAL_POSITION"
             self.cursor.execute(query, (table_postgres,))
             columns = [row[0] for row in self.cursor.fetchall()]
             return columns
@@ -52,10 +51,10 @@ class Bd_postgres:
             print(e)
 
     
-    def search_cpf(self, table_postgres, cpf):
+    def search_nome(self, table_postgres, nome):
         try:
             query = f"SELECT * FROM {table_postgres} WHERE nome = %s"
-            self.cursor.execute(query, cpf)
+            self.cursor.execute(query, nome)
             data = self.cursor.fetchone()
             if data:
                 return data[0]
@@ -110,11 +109,11 @@ class Bd_postgres:
         try:
             query = f"SELECT * FROM {table_postgres} WHERE {column_name} = %s"
             self.cursor.execute(query, (column_value))
-            data = self.cursor.fetchone()
+            data = self.cursor.fetchall()
             if data:
-                print(data)
+                return data
             else:
-                print("Nenhum registro encontrado com esse ID.")
+                return None
                 
         except psycopg2.Error as e:
             print(e)

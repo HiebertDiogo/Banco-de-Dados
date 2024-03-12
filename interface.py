@@ -22,26 +22,19 @@ def cadastro():
     # Solicita informações do usuário para cadastro no banco
     name = input("Nome: ").upper()
     email = input("Email: ")
-
-####CORRIGIR
-    while not ValueError:
-        data_input = input("Data de Nascimento (DD/MM/AAAA): ")
-        try:
-            birth = dt.strptime(data_input, "%d/%m/%Y")
-        except ValueError:
-            print("Formato de data inválido. Certifique-se de usar o formato DD/MM/AAAA.\n")
+  
+    data_input = input("Data de Nascimento (DD/MM/AAAA): ")
+    try:
+        birth = dt.strptime(data_input, "%d/%m/%Y")
+    except ValueError:
+        print("Formato de data inválido. Certifique-se de usar o formato DD/MM/AAAA.\n")
 
     cpf = input("CPF: ")
-
-#### Ou return ou o usuario insere outro CPF?
-    if bd.search_cpf == None:
-        print("Esse CPF já foi cadastrado")
-        return
 
     senha = input("Senha: ")
 
     # Insere as informações no banco de dados
-    bd.inserir("clients", (birth, name, email, cpf, senha))
+    bd.inserir("clients", (name, email, birth, cpf, senha))
     print("Cadastro realizado com sucesso!\n")
 
     # Após o Cadastro, o cliente entra na sua carteira
@@ -67,7 +60,7 @@ def menu_carteira(id_cliente):
         print("Você está na sua Carteira de Investimentos. O que deseja fazer?\n")
         print("1. Operação de Compra")
         print("2. Operação de Venda")
-        print("3. Mostrar Resultados")
+        print("3. Histórico de Operações")
         print("4. Sair")
 
         opcao = int(input("Escolha uma opção: "))
@@ -77,7 +70,8 @@ def menu_carteira(id_cliente):
         elif opcao == 2:
             operacao(id_cliente, opcao)
         elif opcao == 3:
-            mostrar_resultados(id_cliente)
+            # wallet(id_cliente)
+            mostrar_historico_operacoes(id_cliente)
         elif opcao == 4:
             print("Você saiu da sua carteira com sucesso. Até a próxima!\n")
             break
@@ -94,24 +88,29 @@ def operacao(id_cliente, op):
     pMedio = float(input("Preço Médio: "))
     tt = quant * pMedio
 
-    # Inserir operação no banco de dados (BAGUNÇADO)
-    bd.inserir("operations", (dt.now().date(), id_cliente, pMedio, quant, tt, ticker, operacao[0]))
+    # Inserir operação no banco de dados
+    bd.inserir("operations", (dt.now().date(), id_cliente, ticker, operacao[0], quant, pMedio, tt))
     print(f"{operacao} cadastrada com sucesso!\n")
 
 
-def mostrar_resultados(id_cliente):
+def mostrar_historico_operacoes(id_cliente):
     print("\nResultados:")
     # Mostrar informações da carteira do cliente
-    carteira = bd.select_where("wallets", "id_cliente", id_cliente)
+    carteira = bd.select_where("operations", "id_cliente", str(id_cliente))
     if carteira:
         print("\nInformações da carteira:")
         for registro in carteira:
-            print(f"Ativo: {registro['ticker']}, Quantidade: {registro['Quant']}, Preço Médio: R${registro['P_Medio']:.2f}")
+            print(f"Ativo: {registro['ticker']}, Quantidade: {registro['Quant']}, Preço Médio: R${registro['P_Medio']}, Total: R${registro['total']}")
     else:
         print("Você não possui ativos na carteira.")
 
 
+def wallet(id_cliente):
+    bd.select_where("operations", "id_cliente", str(id_cliente))
+
 def main():
+    bd.create_tables()
+
     while True:
         menu_principal()
         opcao = int(input("Escolha uma opção: "))
