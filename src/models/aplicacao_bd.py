@@ -1,25 +1,21 @@
 import psycopg2
-import tables
+import sql.tables as tables
+import json
 
 class Bd_postgres:
-    def __init__(self, dbname, user, password, host, port):
-        self.dbname = dbname
-        self.user = user
-        self.password = password
-        self.host = host
-        self.port = port
+    def __init__(self):
+        self.connection = None
+        self.cursor = None
+
+    def create_connection(self, path_json='./src/models/credentials/credentials.json'):
+
+        with open(path_json, 'r') as file:
+            data = json.load(file)
+
         self.connection = psycopg2.connect(
-            dbname=dbname, user=user, password=password, host=host, port=port
+            dbname=data['NAME_BD'], user=data['USERNAME'], password=data['PASSWORD'], host=data['HOST'], port=data['PORT']
         )
         self.cursor = self.connection.cursor()
-
-    
-    def create_tables(self):
-        self.cursor.execute(tables.operations_table)
-        self.cursor.execute(tables.client_table)
-        self.cursor.execute(tables.wallets_table)
-
-        self.connection.commit()
 
     
     def disconnect(self):
@@ -27,6 +23,12 @@ class Bd_postgres:
             self.cursor.close()
             self.connection.close()
     
+    def create_tables(self):
+        self.cursor.execute(tables.operations_table)
+        self.cursor.execute(tables.client_table)
+        self.cursor.execute(tables.wallets_table)
+
+        self.connection.commit()
     
     def columns_table(self, table_postgres):
         try:
@@ -54,26 +56,13 @@ class Bd_postgres:
     def search_nome(self, table_postgres, nome):
         try:
             query = f"SELECT * FROM {table_postgres} WHERE nome = %s"
-            self.cursor.execute(query, nome)
+            self.cursor.execute(query, (nome,))
             data = self.cursor.fetchone()
             if data:
-                return data[0]
+                for row in data:
+                    print(row)
             else:
-                return None
-
-        except psycopg2.Error as e:
-            print(e)
-#
-    
-    def search_client_id(self, values):
-        try:
-            query = f"SELECT id_cliente FROM clients WHERE cpf = %s AND senha = %s"
-            self.cursor.execute(query, values)
-            data = self.cursor.fetchone()
-            if data:
-                return data[0]
-            else:
-                return -1
+                print(None)
 
         except psycopg2.Error as e:
             print(e)
@@ -82,7 +71,7 @@ class Bd_postgres:
     def delete(self, table_postgres, column_name, column_value):
         try:
             query = f"DELETE FROM {table_postgres} WHERE {column_name} = %s"
-            self.cursor.execute(query, (column_value))
+            self.cursor.execute(query, (column_value,))
             self.connection.commit()
             print("Registro removido com sucesso!")
 
@@ -108,12 +97,13 @@ class Bd_postgres:
     def select_where(self, table_postgres, column_name, column_value):
         try:
             query = f"SELECT * FROM {table_postgres} WHERE {column_name} = %s"
-            self.cursor.execute(query, (column_value))
+            self.cursor.execute(query, (column_value,))
             data = self.cursor.fetchall()
             if data:
-                return data
+                for row in data:
+                    print(row) 
             else:
-                return None
+                print(None)
                 
         except psycopg2.Error as e:
             print(e)
@@ -123,12 +113,24 @@ class Bd_postgres:
         try:
             columns = self.columns_table(tabela)
             set_clause = ", ".join([f"{column} = %s" for column in columns])
-            query = f"UPDATE {tabela} SET {set_clause} WHERE id = %s"
-            self.cursor.execute(query, valores + [id_registro])
+            query = f"UPDATE {tabela} SET {set_clause} WHERE id_cliente = %s"
+            self.cursor.execute(query, valores + (id_registro,))
             self.connection.commit()
             print("Registro alterado com sucesso!")
 
         except psycopg2.Error as e:
             print(e)
             
+    def search_client_id(self, values):
+        try:
+            query = f"SELECT id_cliente FROM clients WHERE cpf = %s AND senha = %s"
+            self.cursor.execute(query, values)
+            data = self.cursor.fetchone()
+            if data:
+                return data[0]
+            else:
+                return -1
+
+        except psycopg2.Error as e:
+            print(e)
 

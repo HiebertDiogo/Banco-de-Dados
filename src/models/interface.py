@@ -1,6 +1,16 @@
 from aplicacao_bd import Bd_postgres
 from datetime import datetime as dt
 
+
+# 1) fazer interface.py virar classe
+# 2) chamar classe aplicacao_bd e interface na MAIN.py, o main deve está no arquivo main.py, na classe interfeca apenas as funções da interface
+# 3) para operacoes: TEM que colocar o valor do id_operacao e id_cliente PRE DEFINIDO para fazer o update
+#       bd.update("operations", 2, (id_operacao, data_nasc, id_cliente,"br", "c", 4, 15.0, value))
+# 4) pode modificar os prints das funcoes da classe BD_POSTGRES, Para ficar legal na interface
+
+
+
+
 # Instância da classe Bd_postgres
 bd = Bd_postgres(
     dbname="Wallet",
@@ -10,6 +20,24 @@ bd = Bd_postgres(
     port=5432,
 )
 
+##IMPLEMENTATION.PY
+# def menu_cadastro():
+#     print(  "\n-------------------------------\n"
+#             "1- Cadastrar\n"
+#             "2- Login\n"
+#             "3- Sair\n"
+#             "-------------------------------")
+    
+    
+# def menu_carteira():
+#     print( "\n-------------------------------\n"
+#             "1- Operacao de Compra\n"
+#             "2- Operacao de Venda\n"
+#             "3- Mostrar Resultados\n"
+#             "4- Sair\n" 
+#             "-------------------------------")
+#######
+    
 def menu_principal():
     print("Bem-vindo à sua carteira de investimentos! Digite o número correspondente ao que deseja fazer:\n")
     print("1. Cadastro")
@@ -40,6 +68,20 @@ def cadastro():
     # Após o Cadastro, o cliente entra na sua carteira
     menu_carteira(bd.search_client_id((cpf, senha)))
 
+##IMPLEMENTATION.PY
+# def cadatro():
+#     name = input("NOME: ").upper()
+#     email = input("EMAIL: ")
+
+#     data_input = input("Data de Nascimento (DD/MM/AAAA): ")
+#     try:
+#         birth = dt.strptime(data_input, "%d/%m/%Y")
+#     except ValueError:
+#         print("Formato de data inválido. Certifique-se de usar o formato DD/MM/AAAA.")
+
+#     return (name, email, birth, login())
+
+######
 
 def login():
     # Solicita as credenciais do cliente para login
@@ -54,6 +96,21 @@ def login():
         print("CPF ou senha incorretos.\n")
         return None
     
+### IMPLEMENTATION.PY
+    
+# def login(): 
+#     cpf = input("CPF: ")
+#     senha = input("Senha: ")
+#     return (cpf, senha)
+
+#######
+
+
+def login(): 
+    cpf = input("CPF: ")
+    senha = input("Senha: ")
+    return (cpf, senha)
+
 
 def menu_carteira(id_cliente):
     while True:
@@ -92,6 +149,19 @@ def operacao(id_cliente, op):
     bd.inserir("operations", (dt.now().date(), id_cliente, ticker, operacao[0], quant, pMedio, tt))
     print(f"{operacao} cadastrada com sucesso!\n")
 
+## IMPLEMENTATION.PY
+# def operacao(cpf, senha): 
+#     data = dt.now().strftime("%d/%m/%Y")
+#     id_cliente = bd.search_client_id((cpf, senha))
+#     ticker = input("Ativo: ").upper()
+#     op = input("Operação (c/v): ").lower()
+#     quant = int(input("Quantidade: "))
+#     pMedio = float(input("Preço Médio: "))
+#     tt = quant * pMedio
+
+#     return (data, id_cliente, ticker, op, quant, pMedio, tt)
+
+#########
 
 def mostrar_historico_operacoes(id_cliente):
     print("\nResultados:")
