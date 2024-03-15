@@ -1,14 +1,10 @@
-from models.aplicacao_bd import Bd_postgres
-import models.interface ##TRANSFORMAR EM CLASSE
-from datetime import datetime as dt
-
+from models.interface import Interface
 
 def main():
-    
-    bd = Bd_postgres()
-    bd.create_connection()
-    bd.disconnect()
-
+    # Cria uma instância da classe Interface
+    interface = Interface()
+    # Chama o menu principal para iniciar a aplicação
+    interface.menu_principal()
 
 if __name__ == "__main__":
     main()

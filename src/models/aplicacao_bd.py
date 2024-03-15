@@ -1,22 +1,24 @@
-import psycopg2
-import sql.tables as tables
+import os
 import json
+import psycopg2
 
 class Bd_postgres:
     def __init__(self):
         self.connection = None
         self.cursor = None
 
-    def create_connection(self, path_json='./src/models/credentials/credentials.json'):
+    def create_connection(self, filename='credentials.json'):
+        # Constrói o caminho até o arquivo de credenciais com base no local atual do script
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        credentials_path = os.path.join(current_dir, 'credentials', filename)
 
-        with open(path_json, 'r') as file:
+        with open(credentials_path, 'r') as file:
             data = json.load(file)
 
         self.connection = psycopg2.connect(
             dbname=data['NAME_BD'], user=data['USERNAME'], password=data['PASSWORD'], host=data['HOST'], port=data['PORT']
         )
         self.cursor = self.connection.cursor()
-
     
     def disconnect(self):
         if self.connection is not None:
