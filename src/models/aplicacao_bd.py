@@ -1,6 +1,7 @@
 import os
 import json
 import psycopg2
+import sql.tables as tables
 
 class Bd_postgres:
     def __init__(self):
@@ -16,14 +17,20 @@ class Bd_postgres:
             data = json.load(file)
 
         self.connection = psycopg2.connect(
-            dbname=data['NAME_BD'], user=data['USERNAME'], password=data['PASSWORD'], host=data['HOST'], port=data['PORT']
+            dbname=data['NAME_BD'],
+            user=data['USERNAME'],
+            password=data['PASSWORD'],
+            host=data['HOST'],
+            port=data['PORT']
         )
         self.cursor = self.connection.cursor()
     
+
     def disconnect(self):
         if self.connection is not None:
             self.cursor.close()
             self.connection.close()
+
     
     def create_tables(self):
         self.cursor.execute(tables.operations_table)
@@ -32,6 +39,7 @@ class Bd_postgres:
 
         self.connection.commit()
     
+
     def columns_table(self, table_postgres):
         try:
             query = f"SELECT column_name FROM information_schema.columns WHERE table_name = %s ORDER BY ORDINAL_POSITION"
@@ -53,23 +61,8 @@ class Bd_postgres:
 
         except psycopg2.Error as e:
             print(e)
-
     
-    def search_nome(self, table_postgres, nome):
-        try:
-            query = f"SELECT * FROM {table_postgres} WHERE nome = %s"
-            self.cursor.execute(query, (nome,))
-            data = self.cursor.fetchone()
-            if data:
-                for row in data:
-                    print(row)
-            else:
-                print(None)
 
-        except psycopg2.Error as e:
-            print(e)
-
-    
     def delete(self, table_postgres, column_name, column_value):
         try:
             query = f"DELETE FROM {table_postgres} WHERE {column_name} = %s"
@@ -81,33 +74,19 @@ class Bd_postgres:
             print(e)
 
     
-    def select(self, table_postgres):
+    def select_where(self, table_postgres, **kwargs):
         try:
-            query = f"SELECT * FROM {table_postgres}"
-            self.cursor.execute(query)
+            conditions = " AND ".join(f"{key} = %s" for key in kwargs.keys())
+            query = f"SELECT * FROM {table_postgres} WHERE {conditions}"
+            values = tuple(kwargs.values())
+            self.cursor.execute(query, values)
             data = self.cursor.fetchall()
             if data:
-                for d in data:
-                    print(d)
+                return data
             else:
-                print("Nenhum registro encontrado.")
-
-        except psycopg2.Error as e:
-            print(e)
-
-    
-    def select_where(self, table_postgres, column_name, column_value):
-        try:
-            query = f"SELECT * FROM {table_postgres} WHERE {column_name} = %s"
-            self.cursor.execute(query, (column_value,))
-            data = self.cursor.fetchall()
-            if data:
-                for row in data:
-                    print(row) 
-            else:
-                print(None)
-                
-        except psycopg2.Error as e:
+                return None
+            
+        except Exception as e:
             print(e)
             
     
@@ -123,6 +102,7 @@ class Bd_postgres:
         except psycopg2.Error as e:
             print(e)
             
+            
     def search_client_id(self, values):
         try:
             query = f"SELECT id_cliente FROM clients WHERE cpf = %s AND senha = %s"
@@ -131,7 +111,7 @@ class Bd_postgres:
             if data:
                 return data[0]
             else:
-                return -1
+                return None
 
         except psycopg2.Error as e:
             print(e)
