@@ -1,9 +1,6 @@
-# 3) para operacoes: TEM que colocar o valor do id_operacao e id_cliente PRE DEFINIDO para fazer o update
-#       bd.update("operations", 2, (id_operacao, data_nasc, id_cliente,"br", "c", 4, 15.0, value))
-# 4) pode modificar os prints das funcoes da classe BD_POSTGRES, Para ficar legal na interface
-
 import os
 import time
+from tabulate import tabulate
 from .aplicacao_bd import Bd_postgres
 from datetime import datetime as dt
 
@@ -11,6 +8,7 @@ class Interface:
     def __init__(self):
         self.bd = Bd_postgres()
         self.bd.create_connection()
+        self.bd.create_tables()
 
     def menu_principal(self):
         os.system('cls' if os.name == 'nt' else 'clear')
@@ -26,11 +24,15 @@ class Interface:
             id_cliente = self.login()
             if id_cliente:
                 self.menu_carteira(id_cliente)
+            else:
+                self.menu_principal()
         elif opcao == 3:
             print("Finalizando o Programa")
             self.bd.disconnect()
         else:
             print("Opção inválida. Tente novamente.\n")
+            time.sleep(1.5)
+            self.menu_carteira()
 
     def cadastro(self):
         os.system('cls' if os.name == 'nt' else 'clear')
@@ -52,6 +54,9 @@ class Interface:
         self.bd.inserir("clients", (name, email, birth, cpf, senha))
         print("Cadastro realizado com sucesso!\n")
 
+        time.sleep(1.5)
+        os.system("cls" if os.name == 'nt' else 'clear')
+
         id_cliente = self.bd.search_client_id((cpf, senha))
         if id_cliente != -1:
             self.menu_carteira(id_cliente)
@@ -64,9 +69,12 @@ class Interface:
         id_cliente = self.bd.search_client_id((cpf, senha))
         if id_cliente:
             print("Login realizado com sucesso!\n")
+            time.sleep(1)
+            os.system('cls' if os.name == 'nt' else 'clear')
             return id_cliente
         else:
             print("CPF ou senha incorretos.\n")
+            time.sleep(1.5)
             return None
 
     def menu_carteira(self, id_cliente):
@@ -119,8 +127,11 @@ class Interface:
         # Mostrar informações da carteira do cliente
         carteira = self.bd.select_where("operations", id_cliente=str(id_cliente))
         if carteira != None:
-            for registro in carteira:
-                print(f"ID: {registro[0]}, Data: {registro[1]}, Ativo: {registro[3]}, Quantidade: {registro[5]}, Preço Médio: R${registro[6]}, Total: R${registro[7]}")
+            columns = list(self.bd.columns_table("operations"))
+            print(tabulate(carteira, headers=columns, tablefmt="grid"))
+
+            # for registro in carteira:
+            #     print(f"ID: {registro[0]}, Data: {registro[1]}, Ativo: {registro[3]}, Quantidade: {registro[5]}, Preço Médio: R${registro[6]}, Total: R${registro[7]}")
 
             upd = input("\nDeseja alterar alguma Operação (y/n)? ").lower()
 
@@ -188,8 +199,6 @@ class Interface:
             senha = input("Nova Senha: ")
 
             self.bd.update_especific("clients", {"email":email,"data_nasc":birth,"senha":senha}, {"id_cliente":id_cliente})
-
-
 
             time.sleep(1.5)
         

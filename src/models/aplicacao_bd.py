@@ -33,9 +33,9 @@ class Bd_postgres:
 
     
     def create_tables(self):
-        self.cursor.execute(tables.operations_table)
         self.cursor.execute(tables.client_table)
-        self.cursor.execute(tables.wallets_table)
+        self.cursor.execute(tables.operations_table)
+        # self.cursor.execute(tables.wallets_table)
 
         self.connection.commit()
 
@@ -56,6 +56,7 @@ class Bd_postgres:
         try:
             columns = self.columns_table(table_postgres)[1:]
             query = f"INSERT INTO {table_postgres} ({', '.join(columns)}) VALUES ({', '.join(['%s']*len(values))}) "
+            
             self.cursor.execute(query, values)
             self.connection.commit()
 
@@ -66,6 +67,7 @@ class Bd_postgres:
     def delete(self, table_postgres, column_name, column_value):
         try:
             query = f"DELETE FROM {table_postgres} WHERE {column_name} = %s"
+
             self.cursor.execute(query, (column_value,))
             self.connection.commit()
             print("Registro removido com sucesso!")
@@ -73,12 +75,14 @@ class Bd_postgres:
         except psycopg2.Error as e:
             print(e)
 
-
+    # Seleciona vários para a busca
     def select_where(self, table_postgres, **kwargs):
         try:
             conditions = " AND ".join(f"{column} = %s" for column in kwargs.keys())
+
             query = f"SELECT * FROM {table_postgres} WHERE {conditions}"
             values = tuple(kwargs.values())
+
             self.cursor.execute(query, values)
             data = self.cursor.fetchall()
             if data:
@@ -89,19 +93,7 @@ class Bd_postgres:
         except Exception as e:
             print(e)
 
-
-    def update(self, tabela, id_registro, valores):
-        try:
-            columns = self.columns_table(tabela)
-            set_clause = ", ".join(f"{column} = %s" for column in columns)
-            query = f"UPDATE {tabela} SET {set_clause} WHERE id_operacao = %s"
-            self.cursor.execute(query, valores)
-            self.connection.commit()
-            print("Registro alterado com sucesso!")
-
-        except psycopg2.Error as e:
-            print(e)
-
+    # Confirma a chave e a senha
     def search_client_id(self, values):
         try:
             query = f"SELECT id_cliente FROM clients WHERE cpf = %s AND senha = %s"
