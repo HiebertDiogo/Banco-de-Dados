@@ -77,7 +77,8 @@ class Interface:
             print("2. Operação de Venda")
             print("3. Histórico de Operações")
             print("4. Mostrar Carteira Resumida")
-            print("5. Sair")
+            print("5. Mostrar Perfil")
+            print("6. Sair")
 
             opcao = int(input("Escolha uma opção: "))
             if opcao == 1 or opcao == 2:
@@ -87,6 +88,8 @@ class Interface:
             elif opcao == 4:
                 print("EM ANDAMENTO\n")
             elif opcao == 5:
+                self.mostrar_cliente(id_cliente)
+            elif opcao == 6:
                 print("Você saiu da sua carteira com sucesso. Até a próxima!\n")
                 time.sleep(1.5)
                 self.menu_principal()
@@ -117,29 +120,28 @@ class Interface:
         carteira = self.bd.select_where("operations", id_cliente=str(id_cliente))
         if carteira != None:
             for registro in carteira:
-                print(f"ID: {registro[0]}, Data: {registro[2]} Ativo: {registro[3]}, Quantidade: {registro[5]}, Preço Médio: R${registro[6]}, Total: R${registro[7]}")
+                print(f"ID: {registro[0]}, Data: {registro[1]}, Ativo: {registro[3]}, Quantidade: {registro[5]}, Preço Médio: R${registro[6]}, Total: R${registro[7]}")
 
             upd = input("\nDeseja alterar alguma Operação (y/n)? ").lower()
 
             if upd == "y":
                 upd = input("\nDeseja Atualizar(A) ou Deletar(D): ").upper()
 
-                id_operacao = int(input("Operação (ID): "))
+                if upd == "A" or upd == ("D"):
 
-                if self.bd.select_where("operations", id_cliente=str(id_cliente), id_operacao=str(id_operacao)):
-                    self.atualizar_operacao(id_cliente, id_operacao)
+                    id_operacao = int(input("Operação (ID): "))
 
-                    if upd == "A":
-                        self.atualizar_operacao(id_cliente, id_operacao)
-                        print("Ativo atualizado com sucesso")
-
-                    elif upd == "D":
-                        self.bd.delete("operations", "id_operacao", id_operacao)
-                        print("Ativo removido com sucesso")
-
+                    if self.bd.select_where("operations", id_cliente=str(id_cliente), id_operacao=str(id_operacao)):
+                        if upd == "A":
+                            self.atualizar_operacao(id_cliente, id_operacao)
+                            print("Ativo atualizado com sucesso")
+                        elif upd == "D":
+                            self.bd.delete("operations", "id_operacao", id_operacao)
+                            print("Ativo removido com sucesso")
+                    else:
+                        print("Esse ID não existe\n")
                 else:
-                    print("Esse ID não existe\n")
-                    
+                    print("Opção Inválida")
         else:
             print("Você não possui ativos na carteira.\n")
 
@@ -149,13 +151,46 @@ class Interface:
     
     def atualizar_operacao(self, id_cliente, id_operacao):
         print("\nAtualizando operação...")
-        data = input("Nova data (DD/MM/AAAA): ")
+        data_input = input("Nova data (DD/MM/AAAA): ")
+        try:
+            data = dt.strptime(data_input, "%d/%m/%Y")
+        except ValueError:
+            print("Formato de data inválido. Certifique-se de usar o formato DD/MM/AAAA.\n")
+            return
         ticker = input("Ticker: ").upper()
         operacao = input("Operação (C/V): ").upper()
         quant = int(input("Quantidade: "))
         p_medio = float(input("Preço Médio: "))
         total = quant * p_medio
 
-        valores = (data, id_cliente, ticker, operacao, quant, p_medio, total)
-        self.bd.update("operations", id_operacao, valores)
+        valores = {"data":data,"ticker":ticker,"operacao":operacao,"quant":quant,"p_medio":p_medio,"total":total}
+
+        self.bd.update_especific("operations", valores, {"id_operacao":id_operacao})        
+
+    def mostrar_cliente(self, id_cliente):
+        os.system('cls' if os.name == 'nt' else 'clear')
+
+        info_clinte = self.bd.select_where("clients", id_cliente=str(id_cliente))[0]
+
+        print(f"""Número da Conta: {info_clinte[0]} \nNome: {info_clinte[1]} \nEmail: {info_clinte[2]} \nData Nascimento: {info_clinte[3]}\n""")
+        
+        upd = input("Deseja alterar alguma Infomação (y/n)? ").lower()
+        
+        if upd == 'y':
+            print("\nEditar Cadastro:")
+            email = input("Email: ")
+            data_input = input("Data de Nascimento (DD/MM/AAAA): ")
+            try:
+                birth = dt.strptime(data_input, "%d/%m/%Y")
+            except ValueError:
+                print("Formato de data inválido. Certifique-se de usar o formato DD/MM/AAAA.\n")
+                return
+            senha = input("Nova Senha: ")
+
+            self.bd.update_especific("clients", {"email":email,"data_nasc":birth,"senha":senha}, {"id_cliente":id_cliente})
+
+
+
+            time.sleep(1.5)
+        
 

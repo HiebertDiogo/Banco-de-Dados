@@ -38,7 +38,7 @@ class Bd_postgres:
         self.cursor.execute(tables.wallets_table)
 
         self.connection.commit()
-    
+
 
     def columns_table(self, table_postgres):
         try:
@@ -51,7 +51,7 @@ class Bd_postgres:
             print(e)
             return None
 
-    
+
     def inserir(self, table_postgres, values):
         try:
             columns = self.columns_table(table_postgres)[1:]
@@ -61,7 +61,7 @@ class Bd_postgres:
 
         except psycopg2.Error as e:
             print(e)
-    
+
 
     def delete(self, table_postgres, column_name, column_value):
         try:
@@ -73,10 +73,10 @@ class Bd_postgres:
         except psycopg2.Error as e:
             print(e)
 
-    
+
     def select_where(self, table_postgres, **kwargs):
         try:
-            conditions = " AND ".join(f"{key} = %s" for key in kwargs.keys())
+            conditions = " AND ".join(f"{column} = %s" for column in kwargs.keys())
             query = f"SELECT * FROM {table_postgres} WHERE {conditions}"
             values = tuple(kwargs.values())
             self.cursor.execute(query, values)
@@ -88,21 +88,20 @@ class Bd_postgres:
             
         except Exception as e:
             print(e)
-            
-    
+
+
     def update(self, tabela, id_registro, valores):
         try:
             columns = self.columns_table(tabela)
-            set_clause = ", ".join([f"{column} = %s" for column in columns])
-            query = f"UPDATE {tabela} SET {set_clause} WHERE id_cliente = %s"
-            self.cursor.execute(query, valores + (id_registro,))
+            set_clause = ", ".join(f"{column} = %s" for column in columns)
+            query = f"UPDATE {tabela} SET {set_clause} WHERE id_operacao = %s"
+            self.cursor.execute(query, valores)
             self.connection.commit()
             print("Registro alterado com sucesso!")
 
         except psycopg2.Error as e:
             print(e)
-            
-            
+
     def search_client_id(self, values):
         try:
             query = f"SELECT id_cliente FROM clients WHERE cpf = %s AND senha = %s"
@@ -114,5 +113,21 @@ class Bd_postgres:
                 return None
 
         except psycopg2.Error as e:
+            print(e)
+
+    # set_values, where_values são dicionários
+    # O primeiro atribui os valores a serem atualizados
+    # O segundo atribui as condições para atualizar
+    def update_especific(self, tabela, set_values, where_values):
+        try:
+            set_clause = ", ".join([f'{column} = %s' for column in set_values.keys()])
+            where_conditions = " AND ".join([f'{cond} = %s' for cond in where_values.keys()])
+
+            query = f'UPDATE {tabela} SET {set_clause} WHERE {where_conditions}'
+            values = tuple(set_values.values()) + tuple(where_values.values())
+
+            self.cursor.execute(query, values)
+            self.connection.commit()
+        except Exception as e:
             print(e)
 
