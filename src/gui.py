@@ -181,22 +181,39 @@ def handle_mouse_input(event):
     elif current_screen == "register":
         if input_boxes['name'].collidepoint(event.pos):
             input_active['name'] = True
-            input_active['email'] = input_active['dob'] = False
+            reset_other_input_active('name')
         elif input_boxes['email'].collidepoint(event.pos):
-            input_active['name'] = False
             input_active['email'] = True
-            input_active['dob'] = False
+            reset_other_input_active('email')
         elif input_boxes['dob'].collidepoint(event.pos):
-            input_active['name'] = False
-            input_active['email'] = False
             input_active['dob'] = True
+            reset_other_input_active('dob')
+        elif input_boxes['cpf'].collidepoint(event.pos):
+            input_active['cpf'] = True
+            reset_other_input_active('cpf')
+        elif input_boxes['pass'].collidepoint(event.pos):
+            input_active['pass'] = True
+            reset_other_input_active('pass')
         elif button_box.collidepoint(event.pos):
             print("Register Successful")
         else:
-            input_active['name'] = input_active['email'] = input_active['dob'] = False
+            reset_all_input_active()
+
+def reset_other_input_active(active_key):
+    global input_active
+    for key in input_active:
+        if key != active_key:
+            input_active[key] = False
+
+def reset_all_input_active():
+    global input_active
+    for key in input_active:
+        input_active[key] = False
+
 
 def handle_key_input(event):
-    global user_text, pass_text, name_text, email_text, dob_text
+    global user_text, pass_text, name_text, email_text, dob_text, cpf_text  
+
     if current_screen == "login":
         if input_active['user']:
             if event.key == pygame.K_BACKSPACE:
@@ -225,7 +242,7 @@ def handle_key_input(event):
             else:
                 dob_text += event.unicode
         elif input_active['cpf']:
-            if event.key == pygame.K_BACKSPACE:
+            if event.key is pygame.K_BACKSPACE:
                 cpf_text = cpf_text[:-1]
             else:
                 cpf_text += event.unicode
@@ -234,6 +251,7 @@ def handle_key_input(event):
                 pass_text = pass_text[:-1]
             else:
                 pass_text += event.unicode
+
 
 if __name__ == '__main__':
     main()
