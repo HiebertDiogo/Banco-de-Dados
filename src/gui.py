@@ -1,30 +1,71 @@
 import pygame
 import sys
+import os
 
 # Inicializa o Pygame
 pygame.init()
 
 # Configurações da tela
-screen = pygame.display.set_mode((400, 300))
-pygame.display.set_caption("Login Screen")
-font = pygame.font.Font(None, 32)
+screen_width = 800  # Nova largura
+screen_height = 600  # Nova altura
+screen = pygame.display.set_mode((screen_width, screen_height))
+pygame.display.set_caption("Login")
+
+# Carregar e configurar a fonte
+font_path = os.path.join('fonts', 'Poppins-Regular.ttf')  # Substitua pelo caminho correto
+font_small = pygame.font.Font(font_path, 16)
+font_medium = pygame.font.Font(font_path, 20)
+font_large = pygame.font.Font(font_path, 32)
 
 # Cores
-white = (255, 255, 255)
+purple = (123, 120, 255, 1)
+white = (255, 255, 255, 1)
 blue = (0, 0, 128)
 black = (0, 0, 0)
 
 # Variáveis para armazenar inputs
-input_box_user = pygame.Rect(100, 50, 140, 32)  # Tamanho ajustado para evitar redimensionamento
-input_box_pass = pygame.Rect(100, 100, 140, 32)
-button_box = pygame.Rect(150, 150, 100, 32)
+input_box_user = pygame.Rect(screen_width // 2 - 100, 300, 200, 40)
+input_box_pass = pygame.Rect(screen_width // 2 - 100, 360, 200, 40)
+button_box = pygame.Rect(screen_width // 2 - 50, 420, 100, 40)
 user_text = ''
 pass_text = ''
 user_active = pass_active = False
 
+def draw_login_screen():
+    global user_text, pass_text
+    screen.fill(purple)
+    
+    # Header centralizado
+    welcome_text = font_large.render("Bem-vindo", True, white)
+    screen.blit(welcome_text, (screen_width // 2 - welcome_text.get_width() // 2, 100))
+    
+    # Sub-header centralizado
+    login_text = font_medium.render("Faça login para acessar sua Carteira", True, white)
+    screen.blit(login_text, (screen_width // 2 - login_text.get_width() // 2, 200))
+    
+    # Labels para os campos
+    cpf_label = font_small.render("CPF:", True, white)
+    screen.blit(cpf_label, (screen_width // 2 - 100, 275))
+    password_label = font_small.render("Senha:", True, white)
+    screen.blit(password_label, (screen_width // 2 - 100, 340))
+    
+    # Renderiza o texto nas caixas
+    txt_surface_user = font_small.render(user_text, True, white)
+    txt_surface_pass = font_small.render(pass_text, True, white)
+    screen.blit(txt_surface_user, (input_box_user.x + 5, input_box_user.y + 5))
+    screen.blit(txt_surface_pass, (input_box_pass.x + 5, input_box_pass.y + 5))
+    
+    # Desenha as caixas de texto
+    pygame.draw.rect(screen, blue, input_box_user, 2)
+    pygame.draw.rect(screen, blue, input_box_pass, 2)
+    
+    # Desenha o botão
+    login_button = font_small.render('Login', True, white)
+    pygame.draw.rect(screen, blue, button_box)
+    screen.blit(login_button, (button_box.x + 30, button_box.y + 8))
+
 def main():
     global user_text, pass_text, user_active, pass_active
-
     clock = pygame.time.Clock()
     done = False
 
@@ -32,8 +73,7 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 done = True
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                # Define a caixa ativa baseada na localização do clique
+            elif event.type == pygame.MOUSEBUTTONDOWN:
                 if input_box_user.collidepoint(event.pos):
                     user_active = True
                     pass_active = False
@@ -47,8 +87,7 @@ def main():
                         print("Login Successful")
                     else:
                         print("Login Failed")
-
-            if event.type == pygame.KEYDOWN:
+            elif event.type == pygame.KEYDOWN:
                 if user_active:
                     if event.key == pygame.K_BACKSPACE:
                         user_text = user_text[:-1]
@@ -60,21 +99,7 @@ def main():
                     else:
                         pass_text += event.unicode
 
-        screen.fill(white)
-        # Renderizar o texto
-        txt_surface_user = font.render(user_text, True, black)
-        txt_surface_pass = font.render('*' * len(pass_text), True, black)
-        # Desenhar o texto
-        screen.blit(txt_surface_user, (input_box_user.x+5, input_box_user.y+5))
-        screen.blit(txt_surface_pass, (input_box_pass.x+5, input_box_pass.y+5))
-        # Desenhar as caixas de texto
-        pygame.draw.rect(screen, blue, input_box_user, 2)
-        pygame.draw.rect(screen, blue, input_box_pass, 2)
-        # Desenhar o botão
-        pygame.draw.rect(screen, blue, button_box)
-        btn_text = font.render('Login', True, white)
-        screen.blit(btn_text, (button_box.x+15, button_box.y+5))
-
+        draw_login_screen()
         pygame.display.flip()
         clock.tick(30)
 
