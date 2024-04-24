@@ -360,6 +360,7 @@ def handle_mouse_input(event):
             reset_other_input_active('pass')
         elif button_box.collidepoint(event.pos):
             print("Register Successful")
+            current_screen = "login"
         else:
             reset_all_input_active()
     elif current_screen == "main":
