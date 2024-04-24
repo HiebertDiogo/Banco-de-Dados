@@ -40,6 +40,7 @@ cpf_text = ''
 asset_code_text = ''
 quantity_text = ''
 average_price_text = ''
+account_number_text = ''
 button_rects = []
 
 # Ativação de inputs
@@ -263,14 +264,60 @@ def perform_sale(menu_width, content_width):
 
     pygame.display.flip()
 
-def show_transaction_history():
-    print("Showing Transaction History...")
+def show_transaction_history(menu_width, content_width):
+    # Limpa a área de conteúdo
+    pygame.draw.rect(screen, purple, [menu_width, 0, content_width, screen_height])
 
-def show_wallet_summary():
-    print("Showing Wallet Summary...")
+    # Cabeçalho para o histórico de operações
+    header_text = font_large.render("Histórico de Operações", True, white)
+    header_x = menu_width + (content_width - header_text.get_width()) // 2  # Centraliza o cabeçalho
+    screen.blit(header_text, (header_x, 70))
 
-def show_profile():
-    print("Showing Profile...")
+    pygame.display.flip()
+
+def show_wallet_summary(menu_width, content_width):
+    # Limpa a área de conteúdo
+    pygame.draw.rect(screen, purple, [menu_width, 0, content_width, screen_height])
+
+    # Cabeçalho para a carteira resumida
+    header_text = font_large.render("Carteira Resumida", True, white)
+    header_x = menu_width + (content_width - header_text.get_width()) // 2  # Centraliza o cabeçalho
+    screen.blit(header_text, (header_x, 70))
+
+    pygame.display.flip()
+
+def show_profile(menu_width, content_width):
+    # Limpa a área de conteúdo
+    pygame.draw.rect(screen, purple, [menu_width, 0, content_width, screen_height])
+
+    # Cabeçalho para o perfil do usuário
+    header_text = font_large.render("Perfil", True, white)
+    header_x = menu_width + (content_width - header_text.get_width()) // 2  # Centraliza o cabeçalho
+    screen.blit(header_text, (header_x, 70))
+
+    # Labels e Inputs para a compra
+    labels = ['Número da Conta:', 'Nome:', 'Email:', 'Data de Nascimento:']
+    texts = [asset_code_text, name_text, email_text, dob_text]
+    y_offset = 150
+    input_width = content_width - 240  # Diminui a largura das caixas de input
+    input_x = menu_width + (content_width - input_width) // 2  # Centraliza as caixas de input
+    for i, label in enumerate(labels):
+        label_surf = font_small.render(label, True, white)
+        input_rect = pygame.Rect(input_x, y_offset + 70 * i, input_width, 40)  # Altura da caixa ajustada para 40
+        pygame.draw.rect(screen, white, input_rect)
+        text_surf = font_medium.render(texts[i], True, black)
+        screen.blit(label_surf, (input_x, y_offset + 70 * i - 30))
+        text_x = input_rect.x + 10  # Posiciona o texto um pouco para a direita dentro da caixa
+        screen.blit(text_surf, (text_x, input_rect.y + (input_rect.height - text_surf.get_height()) // 2))
+
+    # Botão para atualizar o perfil
+    buy_button_rect = pygame.Rect(input_x, y_offset + 70 * len(labels) + 10, input_width, 50)
+    pygame.draw.rect(screen, blue, buy_button_rect)
+    buy_button_text = font_medium.render("Atualizar", True, white)
+    buy_button_text_x = input_x + (input_width - buy_button_text.get_width()) // 2
+    screen.blit(buy_button_text, (buy_button_text_x, buy_button_rect.y + (buy_button_rect.height - buy_button_text.get_height()) // 2))
+
+    pygame.display.flip()
 
 def exit_application():
     print("Exiting Application...")
