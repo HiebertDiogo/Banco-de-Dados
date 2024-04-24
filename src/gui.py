@@ -22,6 +22,8 @@ purple = (123, 120, 255)
 white = (255, 255, 255)
 blue = (0, 0, 128)
 black = (0, 0, 0)
+red = (255, 59, 59, 1)
+
 
 # Estado da aplicação
 current_screen = "login"
@@ -79,7 +81,7 @@ def draw_login_screen():
     
     # Botão de login
     login_button = font_small.render('Entrar', True, black)
-    button_box = pygame.Rect(screen_width // 2 - 100, 450, 200, 40)  # Ajustado para mais espaço
+    button_box = pygame.Rect(screen_width // 2 - 100, 470, 200, 40)  # Ajustado para mais espaço
     pygame.draw.rect(screen, white, button_box)
     screen.blit(login_button, (button_box.x + 75, button_box.y + 8))
     
@@ -90,7 +92,7 @@ def draw_login_screen():
     register_text_box.topleft = (screen_width // 2 - register_text.get_width() // 2, 410)
     register_text_box.size = (register_text.get_width(), 30)
     screen.blit(register_text, (register_text_box.x, register_text_box.y))
-    pygame.draw.rect(screen, purple, register_text_box, 1)  # Opcional
+    pygame.draw.rect(screen, purple, register_text_box, 1)  
 
     pygame.display.flip()
 
@@ -100,7 +102,7 @@ def draw_register_screen():
     screen.fill(purple)
     # Aumenta o espaço entre cada label e input para evitar sobreposição
     base_y = 130  # Posição inicial para o primeiro label
-    vertical_spacing = 75  # Espaço vertical entre cada par de label e input
+    vertical_spacing = 70  # Espaço vertical entre cada par de label e input
     
     # Headers
     header_text = font_large.render("Cadastro", True, white)
@@ -121,7 +123,7 @@ def draw_register_screen():
         label_surf = font_small.render(label, True, white)
         screen.blit(label_surf, (screen_width // 2 - 100, label_y))
         
-        input_boxes[key] = pygame.Rect(screen_width // 2 - 100, input_y, 200, 40)
+        input_boxes[key] = pygame.Rect(screen_width // 2 - 100, input_y, 200, 35)
         txt_surface = font_small.render(inputs[i], True, white)
         screen.blit(txt_surface, (input_boxes[key].x + 5, input_boxes[key].y + 5))
         pygame.draw.rect(screen, blue, input_boxes[key], 2)
@@ -135,30 +137,34 @@ def draw_register_screen():
 
     pygame.display.flip()
 
-def main():
-    global user_text, pass_text, name_text, email_text, dob_text, cpf_text, current_screen
-    clock = pygame.time.Clock()
-    done = False
+def draw_main_screen():
+    screen.fill(purple)
+    header_text = font_large.render("Você está na sua Carteira", True, white)
+    header2_text = font_medium.render("O que você deseja fazer?", True, white)
+    screen.blit(header_text, (screen_width // 2 - header_text.get_width() // 2, 50))
+    screen.blit(header2_text, (screen_width // 2 - header2_text.get_width() // 2, 120))
 
-    while not done:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                done = True
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                handle_mouse_input(event)
-            elif event.type == pygame.KEYDOWN:
-                handle_key_input(event)
+    buttons_text = ["Realizar Compra", "Realizar Venda", "Histórico de Operações", "Carteira Resumida", "Mostrar Perfil", "Sair"]
+    button_rects = []
+    start_y = 200
 
-        if current_screen == "login":
-            draw_login_screen()
-        elif current_screen == "register":
-            draw_register_screen()
+    for index, text in enumerate(buttons_text):
+        if text == "Sair":
+            # Botão Sair: menor e vermelho
+            btn_rect = pygame.Rect(screen_width // 2 - 100, start_y + index * 60, 200, 40)
+            pygame.draw.rect(screen, red, btn_rect)
+        else:
+            # Outros botões: azul e tamanho padrão
+            btn_rect = pygame.Rect(screen_width // 2 - 150, start_y + index * 60, 300, 50)
+            pygame.draw.rect(screen, white, btn_rect)
+        
+        btn_text = font_small.render(text, True, black)
+        screen.blit(btn_text, (btn_rect.x + (btn_rect.width - btn_text.get_width()) // 2, btn_rect.y + (btn_rect.height - btn_text.get_height()) // 2))
+        button_rects.append(btn_rect)
 
-        pygame.display.flip()
-        clock.tick(30)
+    pygame.display.flip()
+    return button_rects
 
-    pygame.quit()
-    sys.exit()
 
 def handle_mouse_input(event):
     global current_screen
@@ -172,6 +178,7 @@ def handle_mouse_input(event):
         elif button_box.collidepoint(event.pos):
             if user_text == 'admin' and pass_text == '123':
                 print("Login Successful")
+                current_screen = "main"
             else:
                 print("Login Failed")
         elif register_text_box.collidepoint(event.pos):
@@ -198,6 +205,42 @@ def handle_mouse_input(event):
             print("Register Successful")
         else:
             reset_all_input_active()
+    elif current_screen == "main":
+        for index, rect in enumerate(button_rects):
+            if rect.collidepoint(event.pos):
+                print(f"Button {index} clicked")  # Placeholder para ação de cada botão
+                if index == 0:
+                    perform_purchase()
+                elif index == 1:
+                    perform_sale()
+                elif index == 2:
+                    show_transaction_history()
+                elif index == 3:
+                    show_wallet_summary()
+                elif index == 4:
+                    show_profile()
+                elif index == 5:
+                    exit_application()
+
+def perform_purchase():
+    print("Performing Purchase...")
+
+def perform_sale():
+    print("Performing Sale...")
+
+def show_transaction_history():
+    print("Showing Transaction History...")
+
+def show_wallet_summary():
+    print("Showing Wallet Summary...")
+
+def show_profile():
+    print("Showing Profile...")
+
+def exit_application():
+    print("Exiting Application...")
+    sys.exit()
+
 
 def reset_other_input_active(active_key):
     global input_active
@@ -252,6 +295,33 @@ def handle_key_input(event):
             else:
                 pass_text += event.unicode
 
+
+def main():
+    global current_screen
+    clock = pygame.time.Clock()
+    done = False
+
+    while not done:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                done = True
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                handle_mouse_input(event)
+            elif event.type == pygame.KEYDOWN:
+                handle_key_input(event)
+
+        if current_screen == "login":
+            draw_login_screen()
+        elif current_screen == "register":
+            draw_register_screen()
+        elif current_screen == "main":
+            draw_main_screen()
+
+        pygame.display.flip()
+        clock.tick(30)
+
+    pygame.quit()
+    sys.exit()
 
 if __name__ == '__main__':
     main()
