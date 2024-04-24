@@ -9,7 +9,7 @@ pygame.init()
 screen_width = 900
 screen_height = 700
 screen = pygame.display.set_mode((screen_width, screen_height))
-pygame.display.set_caption("Login e Cadastro")
+pygame.display.set_caption("Carteira de Investimentos")
 
 # Carregar e configurar a fonte
 font_path = os.path.join('fonts', 'Poppins-Regular.ttf')
@@ -22,11 +22,13 @@ purple = (123, 120, 255)
 white = (255, 255, 255)
 blue = (0, 0, 128)
 black = (0, 0, 0)
-red = (255, 59, 59, 1)
-
+red = (255, 59, 59)
+marine_blue = (35,35,142)
+light_marine_blue = (60, 60, 180)
 
 # Estado da aplicação
 current_screen = "login"
+selected_index = None 
 
 # Variáveis de texto para inputs
 user_text = ''
@@ -35,6 +37,10 @@ name_text = ''
 email_text = ''
 dob_text = ''
 cpf_text = ''
+asset_code_text = ''
+quantity_text = ''
+average_price_text = ''
+button_rects = []
 
 # Ativação de inputs
 input_active = {'user': False, 'pass': False, 'name': False, 'email': False, 'dob': False, 'cpf': False}
@@ -96,7 +102,6 @@ def draw_login_screen():
 
     pygame.display.flip()
 
-
 def draw_register_screen():
     global name_text, email_text, dob_text, cpf_text, pass_text
     screen.fill(purple)
@@ -137,37 +142,112 @@ def draw_register_screen():
 
     pygame.display.flip()
 
-def draw_main_screen():
+def draw_main_screen(selected_index=None):
+    global button_rects
     screen.fill(purple)
-    header_text = font_large.render("Você está na sua Carteira", True, white)
-    header2_text = font_medium.render("O que você deseja fazer?", True, white)
-    screen.blit(header_text, (screen_width // 2 - header_text.get_width() // 2, 50))
-    screen.blit(header2_text, (screen_width // 2 - header2_text.get_width() // 2, 120))
+    # Divisão de tela
+    menu_width = 300
+    content_width = screen_width - menu_width
+
+    # Área do menu à esquerda
+    pygame.draw.rect(screen, marine_blue, [0, 0, menu_width, screen_height])
+
+    # Área de conteúdo à direita
+    pygame.draw.rect(screen, purple, [menu_width, 0, content_width, screen_height])
+
+    # Renderiza o cabeçalho e o subcabeçalho centrados dentro da área do menu
+    header_text = font_medium.render("Você está na sua Carteira", True, white)
+    header2_text = font_small.render("O que você deseja fazer?", True, white)
+    screen.blit(header_text, ((menu_width - header_text.get_width()) // 2, 50))
+    screen.blit(header2_text, ((menu_width - header2_text.get_width()) // 2, 110))
 
     buttons_text = ["Realizar Compra", "Realizar Venda", "Histórico de Operações", "Carteira Resumida", "Mostrar Perfil", "Sair"]
     button_rects = []
-    start_y = 200
+    start_y = 150
 
     for index, text in enumerate(buttons_text):
-        if text == "Sair":
-            # Botão Sair: menor e vermelho
-            btn_rect = pygame.Rect(screen_width // 2 - 100, start_y + index * 60, 200, 40)
+        if index == 5:
+            # Botão Sair é menor na largura e mais abaixo
+            small_btn_width = 180  # Largura menor para o botão Sair
+            btn_rect = pygame.Rect(menu_width / 2 - small_btn_width / 2, start_y + (index * 60 + 50), small_btn_width, 40)
             pygame.draw.rect(screen, red, btn_rect)
         else:
-            # Outros botões: azul e tamanho padrão
-            btn_rect = pygame.Rect(screen_width // 2 - 150, start_y + index * 60, 300, 50)
-            pygame.draw.rect(screen, white, btn_rect)
-        
-        btn_text = font_small.render(text, True, black)
+            btn_rect = pygame.Rect(10, start_y + index * 60, menu_width - 20, 50)
+            button_color = light_marine_blue if index == selected_index else black
+            pygame.draw.rect(screen, button_color, btn_rect)  # Usa a cor clara para o botão selecionado
+
+        btn_text = font_small.render(text, True, white)
         screen.blit(btn_text, (btn_rect.x + (btn_rect.width - btn_text.get_width()) // 2, btn_rect.y + (btn_rect.height - btn_text.get_height()) // 2))
         button_rects.append(btn_rect)
 
-    pygame.display.flip()
-    return button_rects
+    # Conteúdo à direita baseado no botão selecionado
+    if selected_index is not None:
+        if selected_index == 0:
+            perform_purchase(menu_width, content_width)
+        elif selected_index == 1:
+            perform_sale(menu_width, content_width)
+        elif selected_index == 2:
+            show_transaction_history(menu_width, content_width)
+        elif selected_index == 3:
+            show_wallet_summary(menu_width, content_width)
+        elif selected_index == 4:
+            show_profile(menu_width, content_width)
+        elif selected_index == 5:
+            exit_application()
 
+    pygame.display.flip()
+
+def perform_purchase(menu_width, content_width):
+    # Limpa a área de conteúdo
+    pygame.draw.rect(screen, purple, [menu_width, 0, content_width, screen_height])
+
+    # Cabeçalho para a compra de ativos
+    header_text = font_large.render("Comprar ativo", True, white)
+    header_x = menu_width + (content_width - header_text.get_width()) // 2  # Centraliza o cabeçalho
+    screen.blit(header_text, (header_x, 70))
+
+    # Labels e Inputs para a compra
+    labels = ['Código do ativo:', 'Quantidade:', 'Preço Médio:']
+    texts = [asset_code_text, quantity_text, average_price_text]
+    y_offset = 150
+    input_width = content_width - 240  # Diminui a largura das caixas de input
+    input_x = menu_width + (content_width - input_width) // 2  # Centraliza as caixas de input
+    for i, label in enumerate(labels):
+        label_surf = font_small.render(label, True, white)
+        input_rect = pygame.Rect(input_x, y_offset + 70 * i, input_width, 40)  # Altura da caixa ajustada para 40
+        pygame.draw.rect(screen, white, input_rect)
+        text_surf = font_medium.render(texts[i], True, black)
+        screen.blit(label_surf, (input_x, y_offset + 70 * i - 30))
+        text_x = input_rect.x + 10  # Posiciona o texto um pouco para a direita dentro da caixa
+        screen.blit(text_surf, (text_x, input_rect.y + (input_rect.height - text_surf.get_height()) // 2))
+
+    # Botão para realizar a compra
+    buy_button_rect = pygame.Rect(input_x, y_offset + 70 * len(labels) + 10, input_width, 50)
+    pygame.draw.rect(screen, blue, buy_button_rect)
+    buy_button_text = font_medium.render("Comprar", True, white)
+    buy_button_text_x = input_x + (input_width - buy_button_text.get_width()) // 2
+    screen.blit(buy_button_text, (buy_button_text_x, buy_button_rect.y + (buy_button_rect.height - buy_button_text.get_height()) // 2))
+
+    pygame.display.flip()
+
+def perform_sale():
+    print("Performing Sale...")
+
+def show_transaction_history():
+    print("Showing Transaction History...")
+
+def show_wallet_summary():
+    print("Showing Wallet Summary...")
+
+def show_profile():
+    print("Showing Profile...")
+
+def exit_application():
+    print("Exiting Application...")
+    sys.exit()
 
 def handle_mouse_input(event):
-    global current_screen
+    global current_screen, selected_index
     if current_screen == "login":
         if input_boxes['user'].collidepoint(event.pos):
             input_active['user'] = True
@@ -206,41 +286,10 @@ def handle_mouse_input(event):
         else:
             reset_all_input_active()
     elif current_screen == "main":
-        for index, rect in enumerate(button_rects):
+        for i, rect in enumerate(button_rects):
             if rect.collidepoint(event.pos):
-                print(f"Button {index} clicked")  # Placeholder para ação de cada botão
-                if index == 0:
-                    perform_purchase()
-                elif index == 1:
-                    perform_sale()
-                elif index == 2:
-                    show_transaction_history()
-                elif index == 3:
-                    show_wallet_summary()
-                elif index == 4:
-                    show_profile()
-                elif index == 5:
-                    exit_application()
-
-def perform_purchase():
-    print("Performing Purchase...")
-
-def perform_sale():
-    print("Performing Sale...")
-
-def show_transaction_history():
-    print("Showing Transaction History...")
-
-def show_wallet_summary():
-    print("Showing Wallet Summary...")
-
-def show_profile():
-    print("Showing Profile...")
-
-def exit_application():
-    print("Exiting Application...")
-    sys.exit()
-
+                selected_index = i
+                print(f"Button {i} clicked")  # Placeholder para ação de cada botão
 
 def reset_other_input_active(active_key):
     global input_active
@@ -252,7 +301,6 @@ def reset_all_input_active():
     global input_active
     for key in input_active:
         input_active[key] = False
-
 
 def handle_key_input(event):
     global user_text, pass_text, name_text, email_text, dob_text, cpf_text  
@@ -295,9 +343,8 @@ def handle_key_input(event):
             else:
                 pass_text += event.unicode
 
-
 def main():
-    global current_screen
+    global current_screen, selected_index
     clock = pygame.time.Clock()
     done = False
 
@@ -315,7 +362,7 @@ def main():
         elif current_screen == "register":
             draw_register_screen()
         elif current_screen == "main":
-            draw_main_screen()
+            draw_main_screen(selected_index)
 
         pygame.display.flip()
         clock.tick(30)
