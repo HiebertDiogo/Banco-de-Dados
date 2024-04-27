@@ -31,7 +31,32 @@ class Bd_postgres:
             self.cursor.close()
             self.connection.close()
 
-    
+    def update_wallets_table(self):
+        try:
+            query = """
+            SELECT id_cliente, ticker, SUM(CASE WHEN operacao = 'C' THEN quant ELSE -quant END) AS quant, 
+            AVG(p_medio) AS p_medio, SUM(CASE WHEN operacao = 'C' THEN quant * p_medio ELSE -(quant * p_medio) END ) AS total
+            FROM operations
+            GROUP BY id_cliente, ticker
+            """
+            self.cursor.execute(query)
+            data = self.cursor.fetchall()
+
+            for row in data:
+                id_cliente, ticker, quant, p_medio, total = row
+                values = (id_cliente, ticker, quant, p_medio, total)
+                existing_data = self.select_where("wallets", id_cliente=id_cliente, ticker=ticker)
+                if existing_data:
+                    self.update_especific("wallets", {"quant": quant, "p_medio": p_medio, "total": total},
+                                            {"id_cliente": id_cliente, "ticker": ticker})
+                else:
+                    self.inserir("wallets", values)
+            
+            self.connection.commit()
+            print("Tabela wallets atualizada com sucesso!")
+        except psycopg2.Error as e:
+            print(e)
+
     def create_tables(self):
         self.cursor.execute(tables.client_table)
         self.cursor.execute(tables.operations_table)
@@ -122,4 +147,7 @@ class Bd_postgres:
             self.connection.commit()
         except Exception as e:
             print(e)
+    
+
+
 
