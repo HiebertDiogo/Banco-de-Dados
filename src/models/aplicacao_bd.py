@@ -60,7 +60,7 @@ class Bd_postgres:
     def create_tables(self):
         self.cursor.execute(tables.client_table)
         self.cursor.execute(tables.operations_table)
-        # self.cursor.execute(tables.wallets_table)
+        self.cursor.execute(tables.wallets_table)
 
         self.connection.commit()
 
