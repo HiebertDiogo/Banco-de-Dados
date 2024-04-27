@@ -57,6 +57,27 @@ class Bd_postgres:
         except psycopg2.Error as e:
             print(e)
 
+
+    def create_procedure_truncate(self):
+        sql = """
+        CREATE OR REPLACE PROCEDURE truncate_table(table_name VARCHAR(100))
+        AS $$
+        BEGIN
+            EXECUTE 'TRUNCATE TABLE ' || table_name;
+        END;
+        $$ LANGUAGE plpgsql;
+        """
+
+        self.cursor.execute(sql)
+        self.connection.commit()
+        print("procedure criada")
+
+    def truncate_table(self, table_name):
+        self.cursor.execute("CALL truncate_table(%s)", (table_name,))
+        self.connection.commit()
+        print("procedure chamada com sucesso")
+
+
     def create_tables(self):
         self.cursor.execute(tables.client_table)
         self.cursor.execute(tables.operations_table)
