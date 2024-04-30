@@ -240,36 +240,32 @@ class Bd_postgres:
             self.connection.commit()
         except psycopg2.Error as e:
             print(e)
-
     
     def update_wallets(self, id_cliente):
-
         def calculate_new_avg(operations_by_ticker):
             avg_price = quant = 0
             # operation[2] = quantidade ; operation[3] = preco medio
-
             for operation in operations_by_ticker:
                 # Recalculando o novo preço médio e nova quantidade
                 if operation[1] == 'C':
                     avg_price = (avg_price * quant + operation[3] * operation[2]) / (quant + operation[2])
                     quant = quant + operation[2]
-
                 elif operation[1] == 'V':
                     # Vende menos do que possui
                     if operation[2] < quant:
                         avg_price = avg_price
-
                     # Vende tudo o que possui
                     elif operation[2] == quant: 
                         avg_price = 0
-
                     quant = quant - operation[2]
-
             return quant, round(avg_price, 2)
         
         try:
             # Seleciona todos os ativos que o usuario investe
             tickers = self.select_distinct("ticker", "operations", id_cliente=id_cliente)
+
+            if ticker == None:
+                return
 
             for ticker in tickers:
                 # Filtra-se todas as operações envolvendo o ticker x do usuário
@@ -280,7 +276,7 @@ class Bd_postgres:
                 # Com a lista obtida para todas as operacoes do ticker x, realizamos as contas
                 quant_tt, avg = calculate_new_avg(operations_by_ticker)
                 total = quant_tt*avg
-
+                
                 # Removemos de Wallets caso o Ativo não faça mais parte da carteira
                 if quant_tt == 0:
                     self.delete("wallets", ticker=ticker, id_cliente=id_cliente)
