@@ -1,9 +1,15 @@
+from datetime import datetime
 import pygame
 import sys
 import os
+from models import Bd_postgres  # Certifique-se de que o caminho de importação está correto
 
 # Inicializa o Pygame
 pygame.init()
+
+# Importando a conexão com o banco de dados
+bd = Bd_postgres()
+bd.create_connection()
 
 # Configurações da tela
 screen_width = 900
@@ -12,7 +18,7 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("Carteira de Investimentos")
 
 # Carregar e configurar a fonte
-font_path = os.path.join('src/fonts', 'Poppins-Regular.ttf')
+font_path = os.path.join('fonts', 'Poppins-Regular.ttf')
 font_small = pygame.font.Font(font_path, 16)
 font_medium = pygame.font.Font(font_path, 20)
 font_large = pygame.font.Font(font_path, 40)
@@ -332,6 +338,76 @@ def exit_application():
     print("Exiting Application...")
     sys.exit()
 
+def draw_popup(message):
+    #Desenha um pop-up de erro na tela e espera o usuário fechar.#
+    popup_width = 600
+    popup_height = 200
+    popup_x = (screen_width - popup_width) // 2
+    popup_y = (screen_height - popup_height) // 2
+    popup_rect = pygame.Rect(popup_x, popup_y, popup_width, popup_height)
+    
+    # Desenha o fundo do pop-up
+    pygame.draw.rect(screen, white, popup_rect)
+    pygame.draw.rect(screen, black, popup_rect, 3)
+    
+    # Mensagem de erro
+    error_text = font_medium.render(message, True, red)
+    text_x = popup_x + (popup_width - error_text.get_width()) // 2
+    text_y = popup_y + (popup_height - error_text.get_height()) // 2
+    screen.blit(error_text, (text_x, text_y))
+
+    # Botão Ok
+    ok_button_text = font_small.render("Ok", True, white)
+    ok_button_width = 100
+    ok_button_height = 40
+    ok_button_x = popup_x + (popup_width - ok_button_width) // 2
+    ok_button_y = popup_y + popup_height - ok_button_height - 30
+    ok_button_rect = pygame.Rect(ok_button_x, ok_button_y, ok_button_width, ok_button_height)
+    pygame.draw.rect(screen, marine_blue, ok_button_rect)  # Botão azul
+    screen.blit(ok_button_text, (ok_button_x + (ok_button_width - ok_button_text.get_width()) // 2,
+                                 ok_button_y + (ok_button_height - ok_button_text.get_height()) // 2))
+
+    pygame.display.flip()  # Atualiza a tela para mostrar o pop-up
+    
+    # Loop para manter o pop-up visível
+    waiting = True
+    while waiting:
+        for event in pygame.event.get():
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                waiting = False  # Fecha o pop-up se o mouse é clicado
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    waiting = False  # Fecha o pop-up se ENTER é pressionado
+
+    # Redesenha a tela onde o pop-up foi chamado para restaurar a vista anterior
+    if current_screen == "register":
+        draw_register_screen()
+    elif current_screen == "login":
+        draw_login_screen()
+    elif current_screen == "main":
+        draw_main_screen(selected_index)
+
+def login_check(cpf, senha):
+    # Verifica se o cpf e a senha correspondem a algum usuário no banco
+    user_data = bd.select_where("clients", cpf=cpf, senha=senha)
+    if user_data:
+        print("Login Successful")
+        return True
+    else:
+        draw_popup("CPF ou senha incorretos.")
+        return False
+    
+def register_new_user(name, email, dob, cpf, senha):
+    try:
+        # Formata a data de nascimento
+        dob_formatted = datetime.strptime(dob, "%d/%m/%Y").date()
+        bd.inserir("clients", (name, email, dob_formatted, cpf, senha))
+        print("Register Successful")
+        return True
+    except Exception as e:
+        draw_popup(str(e))
+        return False
+
 def handle_mouse_input(event):
     global current_screen, selected_index
     if current_screen == "login":
@@ -342,38 +418,21 @@ def handle_mouse_input(event):
             input_user['pass'] = True
             reset_other_input_user('pass')
         elif button_box.collidepoint(event.pos):
-            if user_text == 'admin' and pass_text == '123':
-                print("Login Successful")
+            if not user_text or not pass_text:
+                draw_popup("CPF e senha são obrigatórios.")
+            elif login_check(user_text, pass_text):
                 current_screen = "main"
-            else:
-                print("Login Failed")
         elif register_text_box.collidepoint(event.pos):
             current_screen = "register"
         else:
             input_user['user'] = input_user['pass'] = False
-
-    elif current_screen == "register":
-        new_register = False
-        if input_boxes['name'].collidepoint(event.pos):
-            input_user['name'] = True
-            reset_other_input_user('name')
-        elif input_boxes['email'].collidepoint(event.pos):
-            input_user['email'] = True
-            reset_other_input_user('email')
-        elif input_boxes['dob'].collidepoint(event.pos):
-            input_user['dob'] = True
-            reset_other_input_user('dob')
-        elif input_boxes['cpf'].collidepoint(event.pos):
-            input_user['cpf'] = True
-            reset_other_input_user('cpf')
-        elif input_boxes['pass'].collidepoint(event.pos):
-            input_user['pass'] = True
-            reset_other_input_user('pass')
-        elif button_box.collidepoint(event.pos):
-            print("Register Successful")
-            current_screen = "login"
-        else:
-            reset_all_input_user()
+    if current_screen == "register":
+        if button_box.collidepoint(event.pos):
+            if all([name_text, email_text, dob_text, cpf_text, pass_text]):
+                if register_new_user(name_text, email_text, dob_text, cpf_text, pass_text):
+                    current_screen = "login"
+            else:
+                draw_popup("Todos os campos devem ser preenchidos.")
 
     elif current_screen == "main":
         for i, rect in enumerate(button_rects):
