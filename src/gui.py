@@ -7,10 +7,6 @@ from models import Bd_postgres  # Certifique-se de que o caminho de importação
 # Inicializa o Pygame
 pygame.init()
 
-# Importando a conexão com o banco de dados
-bd = Bd_postgres()
-bd.create_connection()
-
 # Configurações da tela
 screen_width = 900
 screen_height = 600
@@ -18,7 +14,7 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("Carteira de Investimentos")
 
 # Carregar e configurar a fonte
-font_path = os.path.join('fonts', 'Poppins-Regular.ttf')
+font_path = os.path.join('src/fonts', 'Poppins-Regular.ttf')
 font_small = pygame.font.Font(font_path, 16)
 font_medium = pygame.font.Font(font_path, 20)
 font_large = pygame.font.Font(font_path, 40)
@@ -493,7 +489,11 @@ def handle_key_input(event):
                 pass_text += event.unicode
 
 def main():
-    global current_screen, selected_index
+    global current_screen, selected_index, bd
+    bd = Bd_postgres() # Importando a conexão com o banco de dados
+    bd.create_connection()
+    bd.create_tables()
+
     clock = pygame.time.Clock()
     done = False
 
@@ -516,6 +516,8 @@ def main():
         pygame.display.flip()
         clock.tick(30)
 
+    bd.disconnect()
+    
     pygame.quit()
     sys.exit()
 
