@@ -291,6 +291,7 @@ def show_transaction_history(menu_width, content_width):
     pygame.display.flip()
 
 def show_wallet_summary(menu_width, content_width):
+    bd.update_wallets(logged_in_client_id)
     # Limpa a área de conteúdo
     pygame.draw.rect(screen, purple, [menu_width, 0, content_width, screen_height])
 
@@ -298,6 +299,32 @@ def show_wallet_summary(menu_width, content_width):
     header_text = font_large.render("Carteira Resumida", True, white)
     header_x = menu_width + (content_width - header_text.get_width()) // 2  # Centraliza o cabeçalho
     screen.blit(header_text, (header_x, 70))
+
+    # Seleciona os dados da carteira
+    carteira = bd.select_where("wallets", id_cliente=logged_in_client_id)
+
+    # Define o cabeçalho da tabela e calcula o comprimento da tabela
+    headers = ["Ticker", "Quantidade", "Preço Médio", "Total"]
+    cell_width = 135  # Largura de cada célula
+    cell_height = 30
+    table_width = (len(headers) * cell_width) + 20  # Adiciona um espaçamento entre as células
+    table_x = menu_width + (content_width - table_width) // 2  # Centraliza a tabela horizontalmente
+    table_y = 150  # Altura da tabela
+
+    # Desenha o cabeçalho da tabela
+    for i, header in enumerate(headers):
+        pygame.draw.rect(screen, white, (table_x + i * cell_width, table_y, cell_width, cell_height))
+        header_text = font_small.render(header, True, black)
+        text_rect = header_text.get_rect(center=(table_x + i * cell_width + cell_width // 2, table_y + cell_height // 2))
+        screen.blit(header_text, text_rect)
+
+    # Desenha os dados da carteira
+    for i, row in enumerate(carteira):
+        for j, value in enumerate(row[2:]):  # Adiciona o número da linha como primeira coluna
+            pygame.draw.rect(screen, white, (table_x + j * cell_width, table_y + (i + 1) * cell_height, cell_width, cell_height))
+            cell_text = font_small.render(str(value), True, black)
+            text_rect = cell_text.get_rect(center=(table_x + j * cell_width + cell_width // 2, table_y + (i + 1) * cell_height + cell_height // 2))
+            screen.blit(cell_text, text_rect)
 
     pygame.display.flip()
 
