@@ -7,22 +7,24 @@ pygame.init()
 
 # Configurações da tela
 screen_width = 900
-screen_height = 700
+screen_height = 600
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("Carteira de Investimentos")
 
 # Carregar e configurar a fonte
-font_path = os.path.join('fonts', 'Poppins-Regular.ttf')
+font_path = os.path.join('src/fonts', 'Poppins-Regular.ttf')
 font_small = pygame.font.Font(font_path, 16)
 font_medium = pygame.font.Font(font_path, 20)
 font_large = pygame.font.Font(font_path, 40)
 
 # Cores
 purple = (123, 120, 255)
+light_purple = (184, 146, 255)
 white = (255, 255, 255)
 blue = (0, 0, 128)
 black = (0, 0, 0)
-red = (255, 59, 59)
+red = (255, 20, 59)
+light_red = (255, 59, 59)
 marine_blue = (35,35,142)
 light_marine_blue = (60, 60, 180)
 
@@ -44,7 +46,8 @@ account_number_text = ''
 button_rects = []
 
 # Ativação de inputs
-input_active = {'user': False, 'pass': False, 'name': False, 'email': False, 'dob': False, 'cpf': False}
+input_user = {'user': False, 'pass': False, 'name': False, 'email': False, 'dob': False, 'cpf': False}
+input_oper = {'ticker': False, 'quant': False, "p_medio": False}
 
 # Definições dos retângulos de input e botão
 label_spacing = 25  # Espaço entre o label e o input box
@@ -76,7 +79,8 @@ def draw_login_screen():
     input_boxes['user'] = pygame.Rect(screen_width // 2 - 100, 235, 200, 40)
     txt_surface_user = font_small.render(user_text, True, white)
     screen.blit(txt_surface_user, (input_boxes['user'].x + 5, input_boxes['user'].y + 5))
-    pygame.draw.rect(screen, blue, input_boxes['user'], 2)
+    border_color = white if pygame.mouse.get_pressed()[0] and input_boxes['user'].collidepoint(pygame.mouse.get_pos()) else blue
+    pygame.draw.rect(screen, border_color, input_boxes['user'], 2, border_radius=5)
     
     # Label e Input para Senha
     password_label = font_small.render("Senha:", True, white)
@@ -84,12 +88,14 @@ def draw_login_screen():
     input_boxes['pass'] = pygame.Rect(screen_width // 2 - 100, 320, 200, 40)
     txt_surface_pass = font_small.render(pass_text, True, white)
     screen.blit(txt_surface_pass, (input_boxes['pass'].x + 5, input_boxes['pass'].y + 5))
-    pygame.draw.rect(screen, blue, input_boxes['pass'], 2)
+    border_color = white if pygame.mouse.get_pressed()[0] and input_boxes['pass'].collidepoint(pygame.mouse.get_pos()) else blue
+    pygame.draw.rect(screen, border_color, input_boxes['pass'], 2, border_radius=5)
     
     # Botão de login
     login_button = font_small.render('Entrar', True, black)
     button_box = pygame.Rect(screen_width // 2 - 100, 470, 200, 40)  # Ajustado para mais espaço
-    pygame.draw.rect(screen, white, button_box)
+    button_color = light_purple if button_box.collidepoint(pygame.mouse.get_pos()) else white
+    pygame.draw.rect(screen, button_color, button_box, border_radius=15)
     screen.blit(login_button, (button_box.x + 75, button_box.y + 8))
     
     # Link de cadastro
@@ -99,7 +105,7 @@ def draw_login_screen():
     register_text_box.topleft = (screen_width // 2 - register_text.get_width() // 2, 410)
     register_text_box.size = (register_text.get_width(), 30)
     screen.blit(register_text, (register_text_box.x, register_text_box.y))
-    pygame.draw.rect(screen, purple, register_text_box, 1)  
+    pygame.draw.rect(screen, purple, register_text_box, 1)
 
     pygame.display.flip()
 
@@ -132,13 +138,15 @@ def draw_register_screen():
         input_boxes[key] = pygame.Rect(screen_width // 2 - 100, input_y, 200, 35)
         txt_surface = font_small.render(inputs[i], True, white)
         screen.blit(txt_surface, (input_boxes[key].x + 5, input_boxes[key].y + 5))
-        pygame.draw.rect(screen, blue, input_boxes[key], 2)
+        border_color = white if pygame.mouse.get_pressed()[0] and input_boxes[key].collidepoint(pygame.mouse.get_pos()) else blue
+        pygame.draw.rect(screen, border_color, input_boxes[key], 2, border_radius=5)
     
     # Botão de cadastro ajustado para estar abaixo do último input box
     button_y = base_y + len(labels) * vertical_spacing
     button_box = pygame.Rect(screen_width // 2 - 100, button_y, 200, 40)
     register_button = font_small.render('Cadastrar', True, black)
-    pygame.draw.rect(screen, white, button_box)
+    button_color = light_purple if button_box.collidepoint(pygame.mouse.get_pos()) else white
+    pygame.draw.rect(screen, button_color, button_box, border_radius=15)
     screen.blit(register_button, (button_box.x + 65, button_box.y + 8))
 
     pygame.display.flip()
@@ -171,11 +179,12 @@ def draw_main_screen(selected_index=None):
             # Botão Sair é menor na largura e mais abaixo
             small_btn_width = 180  # Largura menor para o botão Sair
             btn_rect = pygame.Rect(menu_width / 2 - small_btn_width / 2, start_y + (index * 60 + 50), small_btn_width, 40)
-            pygame.draw.rect(screen, red, btn_rect)
+            button_color = red if btn_rect.collidepoint(pygame.mouse.get_pos()) else light_red
+            pygame.draw.rect(screen, button_color, btn_rect, border_radius=15)
         else:
             btn_rect = pygame.Rect(10, start_y + index * 60, menu_width - 20, 50)
-            button_color = light_marine_blue if index == selected_index else black
-            pygame.draw.rect(screen, button_color, btn_rect)  # Usa a cor clara para o botão selecionado
+            button_color = light_marine_blue if (index == selected_index or btn_rect.collidepoint(pygame.mouse.get_pos())) else black
+            pygame.draw.rect(screen, button_color, btn_rect, border_radius=15)  # Usa a cor clara para o botão selecionado
 
         btn_text = font_small.render(text, True, white)
         screen.blit(btn_text, (btn_rect.x + (btn_rect.width - btn_text.get_width()) // 2, btn_rect.y + (btn_rect.height - btn_text.get_height()) // 2))
@@ -203,7 +212,7 @@ def perform_purchase(menu_width, content_width):
     pygame.draw.rect(screen, purple, [menu_width, 0, content_width, screen_height])
 
     # Cabeçalho para a compra de ativos
-    header_text = font_large.render("Comprar ativo", True, white)
+    header_text = font_large.render("Compra", True, white)
     header_x = menu_width + (content_width - header_text.get_width()) // 2  # Centraliza o cabeçalho
     screen.blit(header_text, (header_x, 70))
 
@@ -216,7 +225,7 @@ def perform_purchase(menu_width, content_width):
     for i, label in enumerate(labels):
         label_surf = font_small.render(label, True, white)
         input_rect = pygame.Rect(input_x, y_offset + 70 * i, input_width, 40)  # Altura da caixa ajustada para 40
-        pygame.draw.rect(screen, white, input_rect)
+        pygame.draw.rect(screen, white, input_rect, border_radius=5)
         text_surf = font_medium.render(texts[i], True, black)
         screen.blit(label_surf, (input_x, y_offset + 70 * i - 30))
         text_x = input_rect.x + 10  # Posiciona o texto um pouco para a direita dentro da caixa
@@ -224,8 +233,8 @@ def perform_purchase(menu_width, content_width):
 
     # Botão para realizar a compra
     buy_button_rect = pygame.Rect(input_x, y_offset + 70 * len(labels) + 10, input_width, 50)
-    pygame.draw.rect(screen, blue, buy_button_rect)
-    buy_button_text = font_medium.render("Comprar", True, white)
+    pygame.draw.rect(screen, blue, buy_button_rect, border_radius=15)
+    buy_button_text = font_medium.render("Registrar", True, white)
     buy_button_text_x = input_x + (input_width - buy_button_text.get_width()) // 2
     screen.blit(buy_button_text, (buy_button_text_x, buy_button_rect.y + (buy_button_rect.height - buy_button_text.get_height()) // 2))
 
@@ -236,7 +245,7 @@ def perform_sale(menu_width, content_width):
     pygame.draw.rect(screen, purple, [menu_width, 0, content_width, screen_height])
 
     # Cabeçalho para a venda de ativos
-    header_text = font_large.render("Vender ativo", True, white)
+    header_text = font_large.render("Venda", True, white)
     header_x = menu_width + (content_width - header_text.get_width()) // 2  # Centraliza o cabeçalho
     screen.blit(header_text, (header_x, 70))
 
@@ -249,7 +258,7 @@ def perform_sale(menu_width, content_width):
     for i, label in enumerate(labels):
         label_surf = font_small.render(label, True, white)
         input_rect = pygame.Rect(input_x, y_offset + 70 * i, input_width, 40)  # Altura da caixa ajustada para 40
-        pygame.draw.rect(screen, white, input_rect)
+        pygame.draw.rect(screen, white, input_rect, border_radius=5)
         text_surf = font_medium.render(texts[i], True, black)
         screen.blit(label_surf, (input_x, y_offset + 70 * i - 30))
         text_x = input_rect.x + 10  # Posiciona o texto um pouco para a direita dentro da caixa
@@ -257,8 +266,8 @@ def perform_sale(menu_width, content_width):
 
     # Botão para realizar a venda
     buy_button_rect = pygame.Rect(input_x, y_offset + 70 * len(labels) + 10, input_width, 50)
-    pygame.draw.rect(screen, blue, buy_button_rect)
-    buy_button_text = font_medium.render("Vender", True, white)
+    pygame.draw.rect(screen, blue, buy_button_rect, border_radius=15)
+    buy_button_text = font_medium.render("Registrar", True, white)
     buy_button_text_x = input_x + (input_width - buy_button_text.get_width()) // 2
     screen.blit(buy_button_text, (buy_button_text_x, buy_button_rect.y + (buy_button_rect.height - buy_button_text.get_height()) // 2))
 
@@ -304,7 +313,7 @@ def show_profile(menu_width, content_width):
     for i, label in enumerate(labels):
         label_surf = font_small.render(label, True, white)
         input_rect = pygame.Rect(input_x, y_offset + 70 * i, input_width, 40)  # Altura da caixa ajustada para 40
-        pygame.draw.rect(screen, white, input_rect)
+        pygame.draw.rect(screen, white, input_rect, border_radius=5)
         text_surf = font_medium.render(texts[i], True, black)
         screen.blit(label_surf, (input_x, y_offset + 70 * i - 30))
         text_x = input_rect.x + 10  # Posiciona o texto um pouco para a direita dentro da caixa
@@ -312,7 +321,7 @@ def show_profile(menu_width, content_width):
 
     # Botão para atualizar o perfil
     buy_button_rect = pygame.Rect(input_x, y_offset + 70 * len(labels) + 10, input_width, 50)
-    pygame.draw.rect(screen, blue, buy_button_rect)
+    pygame.draw.rect(screen, blue, buy_button_rect, border_radius=15)
     buy_button_text = font_medium.render("Atualizar", True, white)
     buy_button_text_x = input_x + (input_width - buy_button_text.get_width()) // 2
     screen.blit(buy_button_text, (buy_button_text_x, buy_button_rect.y + (buy_button_rect.height - buy_button_text.get_height()) // 2))
@@ -327,11 +336,11 @@ def handle_mouse_input(event):
     global current_screen, selected_index
     if current_screen == "login":
         if input_boxes['user'].collidepoint(event.pos):
-            input_active['user'] = True
-            input_active['pass'] = False
+            input_user['user'] = True 
+            reset_other_input_user('user')
         elif input_boxes['pass'].collidepoint(event.pos):
-            input_active['user'] = False
-            input_active['pass'] = True
+            input_user['pass'] = True
+            reset_other_input_user('pass')
         elif button_box.collidepoint(event.pos):
             if user_text == 'admin' and pass_text == '123':
                 print("Login Successful")
@@ -341,81 +350,84 @@ def handle_mouse_input(event):
         elif register_text_box.collidepoint(event.pos):
             current_screen = "register"
         else:
-            input_active['user'] = input_active['pass'] = False
+            input_user['user'] = input_user['pass'] = False
+
     elif current_screen == "register":
+        new_register = False
         if input_boxes['name'].collidepoint(event.pos):
-            input_active['name'] = True
-            reset_other_input_active('name')
+            input_user['name'] = True
+            reset_other_input_user('name')
         elif input_boxes['email'].collidepoint(event.pos):
-            input_active['email'] = True
-            reset_other_input_active('email')
+            input_user['email'] = True
+            reset_other_input_user('email')
         elif input_boxes['dob'].collidepoint(event.pos):
-            input_active['dob'] = True
-            reset_other_input_active('dob')
+            input_user['dob'] = True
+            reset_other_input_user('dob')
         elif input_boxes['cpf'].collidepoint(event.pos):
-            input_active['cpf'] = True
-            reset_other_input_active('cpf')
+            input_user['cpf'] = True
+            reset_other_input_user('cpf')
         elif input_boxes['pass'].collidepoint(event.pos):
-            input_active['pass'] = True
-            reset_other_input_active('pass')
+            input_user['pass'] = True
+            reset_other_input_user('pass')
         elif button_box.collidepoint(event.pos):
             print("Register Successful")
             current_screen = "login"
         else:
-            reset_all_input_active()
+            reset_all_input_user()
+
     elif current_screen == "main":
         for i, rect in enumerate(button_rects):
             if rect.collidepoint(event.pos):
                 selected_index = i
                 print(f"Button {i} clicked")  # Placeholder para ação de cada botão
 
-def reset_other_input_active(active_key):
-    global input_active
-    for key in input_active:
+def reset_other_input_user(active_key):
+    global input_user
+    for key in input_user:
         if key != active_key:
-            input_active[key] = False
+            input_user[key] = False
 
-def reset_all_input_active():
-    global input_active
-    for key in input_active:
-        input_active[key] = False
+def reset_all_input_user():
+    global input_user
+    for key in input_user:
+        input_user[key] = False
 
 def handle_key_input(event):
     global user_text, pass_text, name_text, email_text, dob_text, cpf_text  
 
     if current_screen == "login":
-        if input_active['user']:
+        if input_user['user']:
             if event.key == pygame.K_BACKSPACE:
                 user_text = user_text[:-1]
             else:
                 user_text += event.unicode
-        elif input_active['pass']:
+        elif input_user['pass']:
             if event.key == pygame.K_BACKSPACE:
                 pass_text = pass_text[:-1]
             else:
                 pass_text += event.unicode
     elif current_screen == "register":
-        if input_active['name']:
+        if input_user['name']:
             if event.key == pygame.K_BACKSPACE:
                 name_text = name_text[:-1]
             else:
                 name_text += event.unicode
-        elif input_active['email']:
+        elif input_user['email']:
             if event.key == pygame.K_BACKSPACE:
                 email_text = email_text[:-1]
             else:
                 email_text += event.unicode
-        elif input_active['dob']:
+        elif input_user['dob']:
             if event.key == pygame.K_BACKSPACE:
                 dob_text = dob_text[:-1]
             else:
                 dob_text += event.unicode
-        elif input_active['cpf']:
+        elif input_user['cpf']:
             if event.key is pygame.K_BACKSPACE:
                 cpf_text = cpf_text[:-1]
             else:
                 cpf_text += event.unicode
-        elif input_active['pass']:
+        elif input_user['pass']:
             if event.key == pygame.K_BACKSPACE:
                 pass_text = pass_text[:-1]
             else:
