@@ -18,7 +18,7 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("Carteira de Investimentos")
 
 # Carregar e configurar a fonte
-font_path = os.path.join('src/fonts', 'Poppins-Regular.ttf')
+font_path = os.path.join('fonts', 'Poppins-Regular.ttf')
 font_small = pygame.font.Font(font_path, 16)
 font_medium = pygame.font.Font(font_path, 20)
 font_large = pygame.font.Font(font_path, 40)
@@ -419,7 +419,7 @@ def show_profile(menu_width, content_width):
     pygame.display.flip()
 
 def exit_application():
-    print("Exiting Application...")
+    print("Saindo da Aplicação...")
     sys.exit()
 
 def draw_popup(message):
@@ -478,7 +478,7 @@ def login_check(cpf, senha):
     # Verifica se o cpf e a senha correspondem a algum usuário no banco
     id_cliente = bd.search_especific_where("id_cliente", "clients", cpf=cpf, senha=senha)
     if id_cliente:
-        print("Login Successful")
+        draw_popup("Login realizado com sucesso")
         logged_in_client_id = id_cliente  # Armazena o ID do cliente globalmente
         return True
     else:
