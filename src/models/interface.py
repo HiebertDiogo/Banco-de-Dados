@@ -29,10 +29,12 @@ class Interface:
         elif opcao == 3:
             print("Finalizando o Programa")
             self.bd.disconnect()
+        elif opcao == 4:
+            self.testando()
         else:
             print("Opção inválida. Tente novamente.\n")
             time.sleep(1.5)
-            self.menu_carteira()
+            self.menu_principal()
 
     def cadastro(self):
         os.system('cls' if os.name == 'nt' else 'clear')
@@ -57,7 +59,7 @@ class Interface:
         time.sleep(1.5)
         os.system("cls" if os.name == 'nt' else 'clear')
 
-        id_cliente = self.bd.search_client_id((cpf, senha))
+        id_cliente = self.bd.search_especific_where("id_cliente", "clients", cpf=cpf, senha=senha)
         if id_cliente != -1:
             self.menu_carteira(id_cliente)
 
@@ -66,7 +68,7 @@ class Interface:
         print("\nLogin:")
         cpf = input("CPF: ")
         senha = input("Senha: ")
-        id_cliente = self.bd.search_client_id((cpf, senha))
+        id_cliente = self.bd.search_especific_where("id_cliente", "clients", cpf=cpf, senha=senha)
         if id_cliente:
             print("Login realizado com sucesso!\n")
             time.sleep(1)
@@ -94,7 +96,8 @@ class Interface:
             elif opcao == 3:
                 self.mostrar_historico_operacoes(id_cliente)
             elif opcao == 4:
-                print("EM ANDAMENTO\n")
+                self.mostrar_carteira_resumida(id_cliente)
+                # print("EM ANDAMENTO\n")
             elif opcao == 5:
                 self.mostrar_cliente(id_cliente)
             elif opcao == 6:
@@ -105,6 +108,7 @@ class Interface:
             else:
                 print("Opção inválida. Tente novamente.\n")
 
+
     def operacao(self, id_cliente, op):
         os.system('cls' if os.name == 'nt' else 'clear')
         operacao = "Compra" if op == 1 else "Venda"
@@ -113,6 +117,24 @@ class Interface:
         quant = int(input("Quantidade: "))
         pMedio = float(input("Preço Médio: "))
         tt = quant * pMedio
+
+        if op == 1:
+            ## Verifica se o ativo já está contido em Wallets
+            in_wallet = self.bd.search_especific_where("ticker", "wallets", id_cliente=id_cliente, ticker=ticker)
+            # Inicializamos o ativo em Wallet, caso ele não esteja
+            if in_wallet == None:
+                self.bd.inserir("wallets", (id_cliente, ticker, quant, pMedio, tt))
+
+        if op == 2:
+            # Atualizamos a Wallets, para verificar se a operação de venda é valida
+            self.bd.update_wallets(id_cliente)
+            # Buscamos a quantidade que possuímos
+            in_wallet = self.bd.search_especific_where("quant", "wallets", id_cliente=id_cliente, ticker=ticker)
+
+            # Se não possuí ou a quantidade é insuficiente, anulamos a operação.
+            if in_wallet == None or in_wallet < quant:
+                print("Você não pode vender o que não possui.")
+                return
 
         self.bd.inserir("operations", (dt.now().date(), id_cliente, ticker, operacao[0], quant, pMedio, tt))
         print(f"{operacao} cadastrada com sucesso!\n")
@@ -125,7 +147,7 @@ class Interface:
         os.system('cls' if os.name == 'nt' else 'clear')
         print("Resultados:\n")
         # Mostrar informações da carteira do cliente
-        carteira = self.bd.select_where("operations", id_cliente=str(id_cliente))
+        carteira = self.bd.select_where("operations", id_cliente=id_cliente)
         if carteira != None:
             columns = list(self.bd.columns_table("operations"))
             print(tabulate(carteira, headers=columns, tablefmt="grid"))
@@ -142,12 +164,12 @@ class Interface:
 
                     id_operacao = int(input("Operação (ID): "))
 
-                    if self.bd.select_where("operations", id_cliente=str(id_cliente), id_operacao=str(id_operacao)):
+                    if self.bd.select_where("operations", id_cliente=id_cliente, id_operacao=id_operacao):
                         if upd == "A":
                             self.atualizar_operacao(id_cliente, id_operacao)
                             print("Ativo atualizado com sucesso")
                         elif upd == "D":
-                            self.bd.delete("operations", "id_operacao", id_operacao)
+                            self.bd.delete("operations", "id_operacao", id_operacao=id_operacao)
                             print("Ativo removido com sucesso")
                     else:
                         print("Esse ID não existe\n")
@@ -181,7 +203,7 @@ class Interface:
     def mostrar_cliente(self, id_cliente):
         os.system('cls' if os.name == 'nt' else 'clear')
 
-        info_clinte = self.bd.select_where("clients", id_cliente=str(id_cliente))[0]
+        info_clinte = self.bd.select_where("clients", id_cliente=id_cliente)[0]
 
         print(f"""Número da Conta: {info_clinte[0]} \nNome: {info_clinte[1]} \nEmail: {info_clinte[2]} \nData Nascimento: {info_clinte[3]}\n""")
         
@@ -201,5 +223,28 @@ class Interface:
             self.bd.update_especific("clients", {"email":email,"data_nasc":birth,"senha":senha}, {"id_cliente":id_cliente})
 
             time.sleep(1.5)
+
+
+    def mostrar_carteira_resumida(self, id_cliente):
+        os.system('cls' if os.name == 'nt' else 'clear')
+        self.bd.update_wallets(id_cliente)
+
+        print("Resultados:\n")
+        # Mostrar informações da carteira do cliente
+        carteira = self.bd.select_where("wallets", id_cliente=id_cliente)
+        if carteira != None:
+            columns = list(self.bd.columns_table("wallets"))
+            print(tabulate(carteira, headers=columns, tablefmt="grid"))
+
+
+    def testando(self):
+        a = self.bd.select_distinct("ticker", "operations", id_cliente=3)
+        print(a)
+        # for i in self.bd.summarize_operation_by_tickers():
+        #     print(i)
+        # print(type(self.bd.teste()))
+        # print(self.bd.teste())
+        # self.bd.teste()
         
+            
 

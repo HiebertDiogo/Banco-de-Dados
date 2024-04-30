@@ -77,6 +77,53 @@ class Bd_postgres:
         self.connection.commit()
         print("procedure chamada com sucesso")
 
+    
+    def update_wallets_table(self):
+        try:
+            query = """
+            SELECT id_cliente, ticker, SUM(CASE WHEN operacao = 'C' THEN quant ELSE -quant END) AS quant, 
+            AVG(p_medio) AS p_medio, SUM(CASE WHEN operacao = 'C' THEN quant * p_medio ELSE -(quant * p_medio) END ) AS total
+            FROM operations
+            GROUP BY id_cliente, ticker
+            """
+            self.cursor.execute(query)
+            data = self.cursor.fetchall()
+
+            for row in data:
+                id_cliente, ticker, quant, p_medio, total = row
+                values = (id_cliente, ticker, quant, p_medio, total)
+                existing_data = self.select_where("wallets", id_cliente=id_cliente, ticker=ticker)
+                if existing_data:
+                    self.update_especific("wallets", {"quant": quant, "p_medio": p_medio, "total": total},
+                                            {"id_cliente": id_cliente, "ticker": ticker})
+                else:
+                    self.inserir("wallets", values)
+            
+            self.connection.commit()
+            print("Tabela wallets atualizada com sucesso!")
+        except psycopg2.Error as e:
+            print(e)
+
+
+    def create_procedure_truncate(self):
+        sql = """
+        CREATE OR REPLACE PROCEDURE truncate_table(table_name VARCHAR(100))
+        AS $$
+        BEGIN
+            EXECUTE 'TRUNCATE TABLE ' || table_name;
+        END;
+        $$ LANGUAGE plpgsql;
+        """
+
+        self.cursor.execute(sql)
+        self.connection.commit()
+        print("procedure criada")
+
+    def truncate_table(self, table_name):
+        self.cursor.execute("CALL truncate_table(%s)", (table_name,))
+        self.connection.commit()
+        print("procedure chamada com sucesso")
+
 
     def create_tables(self):
         self.cursor.execute(tables.client_table)
@@ -110,18 +157,20 @@ class Bd_postgres:
             print(e)
 
 
-    def delete(self, table_postgres, column_name, column_value):
+    def delete(self, table_postgres, **kwargs):
         try:
-            query = f"DELETE FROM {table_postgres} WHERE {column_name} = %s"
+            conditions = " AND ".join(f"{column} = %s" for column in kwargs.keys())
 
-            self.cursor.execute(query, (column_value,))
+            query = f"DELETE FROM {table_postgres} WHERE {conditions}"
+            values = tuple(kwargs.values())
+
+            self.cursor.execute(query, values)
             self.connection.commit()
-            print("Registro removido com sucesso!")
 
         except psycopg2.Error as e:
             print(e)
 
-    # Seleciona vários para a busca
+    # Seleciona tudo, dado as condições impostas.
     def select_where(self, table_postgres, **kwargs):
         try:
             conditions = " AND ".join(f"{column} = %s" for column in kwargs.keys())
@@ -136,17 +185,40 @@ class Bd_postgres:
             else:
                 return None
             
-        except Exception as e:
+        except psycopg2.Error as e:
             print(e)
 
-    # Confirma a chave e a senha
-    def search_client_id(self, values):
+    # Busca UM valor em específico, dado as condições impostas.
+    def search_especific_where(self, column, table_postgres, **kwargs):
         try:
-            query = f"SELECT id_cliente FROM clients WHERE cpf = %s AND senha = %s"
+            conditions = " AND ".join(f"{column} = %s" for column in kwargs.keys())
+
+            query = f"SELECT {column} FROM {table_postgres} WHERE {conditions}"
+            values = tuple(kwargs.values())
+
             self.cursor.execute(query, values)
             data = self.cursor.fetchone()
             if data:
                 return data[0]
+            else:
+                return None
+            
+        except psycopg2.Error as e:
+            print(e)
+
+    # Seleciona todos os elementos únicos, dado as condições impostas.
+    def select_distinct(self, column, table_postgres, **kwargs):
+        try:
+            conditions = " AND ".join(f"{column} = %s" for column in kwargs.keys())
+
+            query = f"SELECT DISTINCT {column} FROM {table_postgres} WHERE {conditions}"
+            values = tuple(kwargs.values())
+
+            self.cursor.execute(query, values)
+            data = [info[0] for info in self.cursor.fetchall()]
+
+            if data:
+                return data
             else:
                 return None
 
@@ -166,9 +238,57 @@ class Bd_postgres:
 
             self.cursor.execute(query, values)
             self.connection.commit()
-        except Exception as e:
+        except psycopg2.Error as e:
             print(e)
+
     
+    def update_wallets(self, id_cliente):
 
+        def calculate_new_avg(operations_by_ticker):
+            avg_price = quant = 0
+            # operation[2] = quantidade ; operation[3] = preco medio
 
+            for operation in operations_by_ticker:
+                # Recalculando o novo preço médio e nova quantidade
+                if operation[1] == 'C':
+                    avg_price = (avg_price * quant + operation[3] * operation[2]) / (quant + operation[2])
+                    quant = quant + operation[2]
+
+                elif operation[1] == 'V':
+                    # Vende menos do que possui
+                    if operation[2] < quant:
+                        avg_price = avg_price
+
+                    # Vende tudo o que possui
+                    elif operation[2] == quant: 
+                        avg_price = 0
+
+                    quant = quant - operation[2]
+
+            return quant, round(avg_price, 2)
+        
+        try:
+            # Seleciona todos os ativos que o usuario investe
+            tickers = self.select_distinct("ticker", "operations", id_cliente=id_cliente)
+
+            for ticker in tickers:
+                # Filtra-se todas as operações envolvendo o ticker x do usuário
+                query = f"SELECT o.ticker, o.operacao, o.quant, o.p_medio FROM operations o WHERE id_cliente = %s AND ticker = %s"
+                self.cursor.execute(query, (id_cliente, ticker,))
+                operations_by_ticker = self.cursor.fetchall() 
+
+                # Com a lista obtida para todas as operacoes do ticker x, realizamos as contas
+                quant_tt, avg = calculate_new_avg(operations_by_ticker)
+                total = quant_tt*avg
+
+                # Removemos de Wallets caso o Ativo não faça mais parte da carteira
+                if quant_tt == 0:
+                    self.delete("wallets", ticker=ticker, id_cliente=id_cliente)
+                    continue
+                # Atualizamos o novo valor para o ativo x
+                self.update_especific("wallets",  {"quant":quant_tt, "p_medio":avg, "total":total}, 
+                                      {"id_cliente":id_cliente, "ticker":ticker})
+
+        except psycopg2.Error as e:
+            print(e)
 
