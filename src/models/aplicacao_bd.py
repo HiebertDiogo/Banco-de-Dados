@@ -189,20 +189,17 @@ class Bd_postgres:
             print(e)
 
     # Busca UM valor em específico, dado as condições impostas.
-    def search_especific_where(self, column, table_postgres, **kwargs):
+    def search_especific_where(self, columns, table_postgres, **kwargs):
         try:
             conditions = " AND ".join(f"{column} = %s" for column in kwargs.keys())
 
-            query = f"SELECT {column} FROM {table_postgres} WHERE {conditions}"
+            query = f"SELECT {columns} FROM {table_postgres} WHERE {conditions}"
             values = tuple(kwargs.values())
 
             self.cursor.execute(query, values)
             data = self.cursor.fetchone()
-            if data:
-                return data[0]
-            else:
-                return None
-            
+            return data
+                
         except psycopg2.Error as e:
             print(e)
 
@@ -287,4 +284,3 @@ class Bd_postgres:
 
         except psycopg2.Error as e:
             print(e)
-

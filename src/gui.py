@@ -7,6 +7,10 @@ from models import Bd_postgres  # Certifique-se de que o caminho de importação
 # Inicializa o Pygame
 pygame.init()
 
+# Importando a conexão com o banco de dados
+bd = Bd_postgres()
+bd.create_connection()
+
 # Configurações da tela
 screen_width = 900
 screen_height = 600
@@ -14,7 +18,7 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("Carteira de Investimentos")
 
 # Carregar e configurar a fonte
-font_path = os.path.join('src/fonts', 'Poppins-Regular.ttf')
+font_path = os.path.join('fonts', 'Poppins-Regular.ttf')
 font_small = pygame.font.Font(font_path, 16)
 font_medium = pygame.font.Font(font_path, 20)
 font_large = pygame.font.Font(font_path, 40)
@@ -298,6 +302,8 @@ def show_wallet_summary(menu_width, content_width):
     pygame.display.flip()
 
 def show_profile(menu_width, content_width):
+    global account_number_text, name_text, email_text, dob_text
+
     # Limpa a área de conteúdo
     pygame.draw.rect(screen, purple, [menu_width, 0, content_width, screen_height])
 
@@ -306,9 +312,19 @@ def show_profile(menu_width, content_width):
     header_x = menu_width + (content_width - header_text.get_width()) // 2  # Centraliza o cabeçalho
     screen.blit(header_text, (header_x, 70))
 
-    # Labels e Inputs para a compra
+    # Buscar dados do perfil do usuário no banco de dados
+    user_profile = bd.search_especific_where("id_cliente, nome, email, data_nasc", "clients", id_cliente=logged_in_client_id)
+    if user_profile is not None:
+        id_cliente, nome, email, data_nasc = user_profile
+        # Pré-preencher os campos de input com os dados do perfil do usuário
+        account_number_text = str(id_cliente)  # Número da conta pode ser obtido do ID do cliente
+        name_text = nome
+        email_text = email
+        dob_text = data_nasc.strftime("%d/%m/%Y")  # Formatar a data de nascimento
+
+    # Labels e Inputs para o perfil do usuário
     labels = ['Número da Conta:', 'Nome:', 'Email:', 'Data de Nascimento:']
-    texts = [asset_code_text, name_text, email_text, dob_text]
+    texts = [account_number_text, name_text, email_text, dob_text]
     y_offset = 150
     input_width = content_width - 240  # Diminui a largura das caixas de input
     input_x = menu_width + (content_width - input_width) // 2  # Centraliza as caixas de input
@@ -322,13 +338,22 @@ def show_profile(menu_width, content_width):
         screen.blit(text_surf, (text_x, input_rect.y + (input_rect.height - text_surf.get_height()) // 2))
 
     # Botão para atualizar o perfil
-    buy_button_rect = pygame.Rect(input_x, y_offset + 70 * len(labels) + 10, input_width, 50)
-    pygame.draw.rect(screen, blue, buy_button_rect, border_radius=15)
-    buy_button_text = font_medium.render("Atualizar", True, white)
-    buy_button_text_x = input_x + (input_width - buy_button_text.get_width()) // 2
-    screen.blit(buy_button_text, (buy_button_text_x, buy_button_rect.y + (buy_button_rect.height - buy_button_text.get_height()) // 2))
+    update_button_rect = pygame.Rect(input_x, y_offset + 70 * len(labels) + 10, input_width, 50)
+    pygame.draw.rect(screen, blue, update_button_rect, border_radius=15)
+    update_button_text = font_medium.render("Atualizar", True, white)
+    update_button_text_x = input_x + (input_width - update_button_text.get_width()) // 2
+    screen.blit(update_button_text, (update_button_text_x, update_button_rect.y + (update_button_rect.height - update_button_text.get_height()) // 2))
 
     pygame.display.flip()
+
+    # Verificar clique no botão de atualização
+    if update_button_rect.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0]:
+        # Atualizar dados do perfil no banco de dados
+        updated = bd.update_especific("clients", {"nome": name_text, "email": email_text, "data_nasc": dob_text}, {"id_cliente": logged_in_client_id})
+        if updated:
+            draw_popup("Perfil atualizado com sucesso!")
+        else:
+            draw_popup("Erro ao atualizar perfil. Por favor, tente novamente.")
 
 def exit_application():
     print("Exiting Application...")
@@ -383,15 +408,21 @@ def draw_popup(message):
     elif current_screen == "main":
         draw_main_screen(selected_index)
 
+logged_in_client_id = None
+
 def login_check(cpf, senha):
+    global logged_in_client_id
     # Verifica se o cpf e a senha correspondem a algum usuário no banco
-    user_data = bd.select_where("clients", cpf=cpf, senha=senha)
-    if user_data:
+    id_cliente = bd.search_especific_where("id_cliente", "clients", cpf=cpf, senha=senha)
+    if id_cliente:
         print("Login Successful")
+        logged_in_client_id = id_cliente  # Armazena o ID do cliente globalmente
         return True
     else:
         draw_popup("CPF ou senha incorretos.")
         return False
+    
+input_user = {'user': False, 'pass': False, 'name': False, 'email': False, 'dob': False, 'cpf': False}
     
 def register_new_user(name, email, dob, cpf, senha):
     try:
@@ -405,7 +436,7 @@ def register_new_user(name, email, dob, cpf, senha):
         return False
 
 def handle_mouse_input(event):
-    global current_screen, selected_index
+    global current_screen, selected_index, logged_in_client_id
     if current_screen == "login":
         if input_boxes['user'].collidepoint(event.pos):
             input_user['user'] = True 
@@ -418,12 +449,23 @@ def handle_mouse_input(event):
                 draw_popup("CPF e senha são obrigatórios.")
             elif login_check(user_text, pass_text):
                 current_screen = "main"
-        elif register_text_box.collidepoint(event.pos):
-            current_screen = "register"
-        else:
-            input_user['user'] = input_user['pass'] = False
-    if current_screen == "register":
-        if button_box.collidepoint(event.pos):
+    elif current_screen == "register":
+        if input_boxes['name'].collidepoint(event.pos):
+            input_user['name'] = True 
+            reset_other_input_user('name')
+        elif input_boxes['email'].collidepoint(event.pos):
+            input_user['email'] = True 
+            reset_other_input_user('email')
+        elif input_boxes['dob'].collidepoint(event.pos):
+            input_user['dob'] = True 
+            reset_other_input_user('dob')
+        elif input_boxes['cpf'].collidepoint(event.pos):
+            input_user['cpf'] = True 
+            reset_other_input_user('cpf')
+        elif input_boxes['pass'].collidepoint(event.pos):
+            input_user['pass'] = True 
+            reset_other_input_user('pass')
+        elif button_box.collidepoint(event.pos):
             if all([name_text, email_text, dob_text, cpf_text, pass_text]):
                 if register_new_user(name_text, email_text, dob_text, cpf_text, pass_text):
                     current_screen = "login"
@@ -489,11 +531,7 @@ def handle_key_input(event):
                 pass_text += event.unicode
 
 def main():
-    global current_screen, selected_index, bd
-    bd = Bd_postgres() # Importando a conexão com o banco de dados
-    bd.create_connection()
-    bd.create_tables()
-
+    global current_screen, selected_index
     clock = pygame.time.Clock()
     done = False
 
@@ -517,7 +555,6 @@ def main():
         clock.tick(30)
 
     bd.disconnect()
-    
     pygame.quit()
     sys.exit()
 
