@@ -12,13 +12,13 @@ bd = Bd_postgres()
 bd.create_connection()
 
 # Configurações da tela
-screen_width = 1000
+screen_width = 1080
 screen_height = 700
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("Carteira de Investimentos")
 
 # Carregar e configurar a fonte
-font_path = os.path.join('fonts', 'Poppins-Regular.ttf')
+font_path = os.path.join('src/fonts', 'Poppins-Regular.ttf')
 font_small = pygame.font.Font(font_path, 16)
 font_medium = pygame.font.Font(font_path, 20)
 font_large = pygame.font.Font(font_path, 40)
@@ -36,8 +36,7 @@ light_marine_blue = (60, 60, 180)
 
 # Estado da aplicação
 current_screen = "login"
-selected_index = None
-logged_in_client_id = None
+selected_index = None 
 
 # Variáveis de texto para inputs
 user_text = ''
@@ -280,6 +279,10 @@ def perform_sale(menu_width, content_width):
 
     pygame.display.flip()
 
+########################################################################################################################
+########################################################################################################################
+
+
 def show_transaction_history(menu_width, content_width):
     # Limpa a área de conteúdo
     pygame.draw.rect(screen, purple, [menu_width, 0, content_width, screen_height])
@@ -289,7 +292,37 @@ def show_transaction_history(menu_width, content_width):
     header_x = menu_width + (content_width - header_text.get_width()) // 2  # Centraliza o cabeçalho
     screen.blit(header_text, (header_x, 70))
 
+    # Seleciona os dados da carteira
+    carteira = bd.select_where("operations", id_cliente=logged_in_client_id)
+
+    # Define o cabeçalho da tabela e calcula o comprimento da tabela
+    headers = ["ID", "Data", "ID_cliente", "Ticker", "Operacao", "Quant", "Price", "Total"]
+    # Define o cabeçalho da tabela e calcula o comprimento da célula
+    num_columns = len(headers)
+    cell_width = (content_width - 5) // num_columns  # Calcula a largura da célula
+    table_x = menu_width + (content_width - num_columns * cell_width) // 2  # A posição x da tabela começa no canto esquerdo do menu
+    table_y = 150
+    cell_height = 30
+
+    # Desenha o cabeçalho da tabela
+    for i, header in enumerate(headers):
+        pygame.draw.rect(screen, white, (table_x + i * cell_width, table_y, cell_width, cell_height))
+        header_text = font_small.render(header, True, black)
+        text_rect = header_text.get_rect(center=(table_x + i * cell_width + cell_width // 2, table_y + cell_height // 2))
+        screen.blit(header_text, text_rect)
+
+    # Desenha os dados da carteira
+    for i, row in enumerate(carteira):
+        for j, value in enumerate(row):
+            pygame.draw.rect(screen, white, (table_x + j * cell_width, table_y + (i + 1) * cell_height, cell_width, cell_height))
+            cell_text = font_small.render(str(value), True, black)
+            text_rect = cell_text.get_rect(center=(table_x + j * cell_width + cell_width // 2, table_y + (i + 1) * cell_height + cell_height // 2))
+            screen.blit(cell_text, text_rect)
+
     pygame.display.flip()
+########################################################################################################################
+########################################################################################################################
+
 
 def show_wallet_summary(menu_width, content_width):
     # Limpa a área de conteúdo
@@ -437,6 +470,8 @@ def draw_popup(message):
         draw_login_screen()
     elif current_screen == "main":
         draw_main_screen(selected_index)
+
+logged_in_client_id = None
 
 def login_check(cpf, senha):
     global logged_in_client_id
