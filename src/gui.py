@@ -36,7 +36,8 @@ light_marine_blue = (60, 60, 180)
 
 # Estado da aplicação
 current_screen = "login"
-selected_index = None 
+selected_index = None
+logged_in_client_id = None
 
 # Variáveis de texto para inputs
 user_text = ''
@@ -291,7 +292,6 @@ def show_transaction_history(menu_width, content_width):
     pygame.display.flip()
 
 def show_wallet_summary(menu_width, content_width):
-    bd.update_wallets(logged_in_client_id)
     # Limpa a área de conteúdo
     pygame.draw.rect(screen, purple, [menu_width, 0, content_width, screen_height])
 
@@ -437,8 +437,6 @@ def draw_popup(message):
         draw_login_screen()
     elif current_screen == "main":
         draw_main_screen(selected_index)
-
-logged_in_client_id = None
 
 def login_check(cpf, senha):
     global logged_in_client_id
