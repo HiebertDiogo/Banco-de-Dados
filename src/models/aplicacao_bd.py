@@ -264,7 +264,7 @@ class Bd_postgres:
             # Seleciona todos os ativos que o usuario investe
             tickers = self.select_distinct("ticker", "operations", id_cliente=id_cliente)
 
-            if ticker == None:
+            if tickers == None:
                 return
 
             for ticker in tickers:
