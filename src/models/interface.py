@@ -132,7 +132,7 @@ class Interface:
             in_wallet = self.bd.search_especific_where("quant", "wallets", id_cliente=id_cliente, ticker=ticker)
 
             # Se não possuí ou a quantidade é insuficiente, anulamos a operação.
-            if in_wallet == None or in_wallet < quant:
+            if in_wallet == None or in_wallet[0] < quant:
                 print("Você não pode vender o que não possui.")
                 return
 
