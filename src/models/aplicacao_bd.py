@@ -24,86 +24,11 @@ class Bd_postgres:
             port=data['PORT']
         )
         self.cursor = self.connection.cursor()
-    
 
     def disconnect(self):
         if self.connection is not None:
             self.cursor.close()
             self.connection.close()
-
-    def update_wallets_table(self):
-        try:
-            query = """
-            SELECT id_cliente, ticker, SUM(CASE WHEN operacao = 'C' THEN quant ELSE -quant END) AS quant, 
-            AVG(p_medio) AS p_medio, SUM(CASE WHEN operacao = 'C' THEN quant * p_medio ELSE -(quant * p_medio) END ) AS total
-            FROM operations
-            GROUP BY id_cliente, ticker
-            """
-            self.cursor.execute(query)
-            data = self.cursor.fetchall()
-
-            for row in data:
-                id_cliente, ticker, quant, p_medio, total = row
-                values = (id_cliente, ticker, quant, p_medio, total)
-                existing_data = self.select_where("wallets", id_cliente=id_cliente, ticker=ticker)
-                if existing_data:
-                    self.update_especific("wallets", {"quant": quant, "p_medio": p_medio, "total": total},
-                                            {"id_cliente": id_cliente, "ticker": ticker})
-                else:
-                    self.inserir("wallets", values)
-            
-            self.connection.commit()
-            print("Tabela wallets atualizada com sucesso!")
-        except psycopg2.Error as e:
-            print(e)
-
-
-    def create_procedure_truncate(self):
-        sql = """
-        CREATE OR REPLACE PROCEDURE truncate_table(table_name VARCHAR(100))
-        AS $$
-        BEGIN
-            EXECUTE 'TRUNCATE TABLE ' || table_name;
-        END;
-        $$ LANGUAGE plpgsql;
-        """
-
-        self.cursor.execute(sql)
-        self.connection.commit()
-        print("procedure criada")
-
-    def truncate_table(self, table_name):
-        self.cursor.execute("CALL truncate_table(%s)", (table_name,))
-        self.connection.commit()
-        print("procedure chamada com sucesso")
-
-    
-    def update_wallets_table(self):
-        try:
-            query = """
-            SELECT id_cliente, ticker, SUM(CASE WHEN operacao = 'C' THEN quant ELSE -quant END) AS quant, 
-            AVG(p_medio) AS p_medio, SUM(CASE WHEN operacao = 'C' THEN quant * p_medio ELSE -(quant * p_medio) END ) AS total
-            FROM operations
-            GROUP BY id_cliente, ticker
-            """
-            self.cursor.execute(query)
-            data = self.cursor.fetchall()
-
-            for row in data:
-                id_cliente, ticker, quant, p_medio, total = row
-                values = (id_cliente, ticker, quant, p_medio, total)
-                existing_data = self.select_where("wallets", id_cliente=id_cliente, ticker=ticker)
-                if existing_data:
-                    self.update_especific("wallets", {"quant": quant, "p_medio": p_medio, "total": total},
-                                            {"id_cliente": id_cliente, "ticker": ticker})
-                else:
-                    self.inserir("wallets", values)
-            
-            self.connection.commit()
-            print("Tabela wallets atualizada com sucesso!")
-        except psycopg2.Error as e:
-            print(e)
-
 
     def create_procedure_truncate(self):
         sql = """
@@ -188,6 +113,7 @@ class Bd_postgres:
         except psycopg2.Error as e:
             print(e)
 
+
     # Busca UM valor em específico, dado as condições impostas.
     def search_especific_where(self, columns, table_postgres, **kwargs):
         try:
@@ -198,6 +124,7 @@ class Bd_postgres:
 
             self.cursor.execute(query, values)
             data = self.cursor.fetchone()
+
             return data
                 
         except psycopg2.Error as e:
@@ -237,11 +164,14 @@ class Bd_postgres:
             self.connection.commit()
         except psycopg2.Error as e:
             print(e)
+
     
     def update_wallets(self, id_cliente):
+
         def calculate_new_avg(operations_by_ticker):
             avg_price = quant = 0
             # operation[2] = quantidade ; operation[3] = preco medio
+
             for operation in operations_by_ticker:
                 # Recalculando o novo preço médio e nova quantidade
                 if operation[1] == 'C':
@@ -252,9 +182,11 @@ class Bd_postgres:
                     if operation[2] < quant:
                         avg_price = avg_price
                     # Vende tudo o que possui
-                    elif operation[2] == quant: 
+                    elif operation[2] == quant:
                         avg_price = 0
+
                     quant = quant - operation[2]
+
             return quant, round(avg_price, 2)
         
         try:
@@ -273,7 +205,7 @@ class Bd_postgres:
                 # Com a lista obtida para todas as operacoes do ticker x, realizamos as contas
                 quant_tt, avg = calculate_new_avg(operations_by_ticker)
                 total = quant_tt*avg
-                
+
                 # Removemos de Wallets caso o Ativo não faça mais parte da carteira
                 if quant_tt == 0:
                     self.delete("wallets", ticker=ticker, id_cliente=id_cliente)
@@ -284,3 +216,4 @@ class Bd_postgres:
 
         except psycopg2.Error as e:
             print(e)
+

@@ -29,8 +29,6 @@ class Interface:
         elif opcao == 3:
             print("Finalizando o Programa")
             self.bd.disconnect()
-        elif opcao == 4:
-            self.testando()
         else:
             print("Opção inválida. Tente novamente.\n")
             time.sleep(1.5)
@@ -152,18 +150,13 @@ class Interface:
             columns = list(self.bd.columns_table("operations"))
             print(tabulate(carteira, headers=columns, tablefmt="grid"))
 
-            # for registro in carteira:
-            #     print(f"ID: {registro[0]}, Data: {registro[1]}, Ativo: {registro[3]}, Quantidade: {registro[5]}, Preço Médio: R${registro[6]}, Total: R${registro[7]}")
-
             upd = input("\nDeseja alterar alguma Operação (y/n)? ").lower()
 
             if upd == "y":
                 upd = input("\nDeseja Atualizar(A) ou Deletar(D): ").upper()
 
                 if upd == "A" or upd == ("D"):
-
                     id_operacao = int(input("Operação (ID): "))
-
                     if self.bd.select_where("operations", id_cliente=id_cliente, id_operacao=id_operacao):
                         if upd == "A":
                             self.atualizar_operacao(id_cliente, id_operacao)
@@ -235,16 +228,10 @@ class Interface:
         if carteira != None:
             columns = list(self.bd.columns_table("wallets"))
             print(tabulate(carteira, headers=columns, tablefmt="grid"))
-
-
-    def testando(self):
-        a = self.bd.select_distinct("ticker", "operations", id_cliente=3)
-        print(a)
-        # for i in self.bd.summarize_operation_by_tickers():
-        #     print(i)
-        # print(type(self.bd.teste()))
-        # print(self.bd.teste())
-        # self.bd.teste()
         
+        else:
+            print("Você não possui ativos na carteira.\n")
+
+
             
 
