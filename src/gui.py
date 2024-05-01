@@ -1,5 +1,6 @@
 from datetime import datetime
 import pygame
+from datetime import datetime as dt
 import sys
 import os
 from models import Bd_postgres  # Certifique-se de que o caminho de importação está correto
@@ -18,7 +19,7 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("Carteira de Investimentos")
 
 # Carregar e configurar a fonte
-font_path = os.path.join('fonts', 'Poppins-Regular.ttf')
+font_path = os.path.join('src/fonts', 'Poppins-Regular.ttf')
 font_small = pygame.font.Font(font_path, 16)
 font_medium = pygame.font.Font(font_path, 20)
 font_large = pygame.font.Font(font_path, 40)
@@ -65,8 +66,17 @@ input_boxes = {
     'email': pygame.Rect(screen_width // 2 - 100, 245 + label_spacing, 200, 40),
     'dob': pygame.Rect(screen_width // 2 - 100, 295 + label_spacing, 200, 40),
     'cpf': pygame.Rect(screen_width // 2 - 100, 345 + label_spacing, 200, 40),
-    'pass': pygame.Rect(screen_width // 2 - 100, 395 + label_spacing, 200, 40)
+    'pass': pygame.Rect(screen_width // 2 - 100, 395 + label_spacing, 200, 40),
 }
+
+# Gambiarra
+input_boxes_main = {
+    'ativo': pygame.Rect(screen_width // 2 - 100, 250, 200, 40),
+    'quant': pygame.Rect(screen_width // 2 - 100, 250, 200, 40),
+    'p_medio': pygame.Rect(screen_width // 2 - 100, 250, 200, 40),
+    'buscar': pygame.Rect(screen_width // 2 - 100, 250, 200, 40)
+}
+
 button_box = pygame.Rect(screen_width // 2 - 100, 445 + label_spacing, 200, 40)
 register_text_box = pygame.Rect(screen_width // 2 - 100, 430, 300, 30)
 
@@ -215,6 +225,7 @@ def draw_main_screen(selected_index=None):
     pygame.display.flip()
 
 def perform_purchase(menu_width, content_width):
+    global input_boxes_main
     # Limpa a área de conteúdo
     pygame.draw.rect(screen, purple, [menu_width, 0, content_width, screen_height])
 
@@ -229,21 +240,38 @@ def perform_purchase(menu_width, content_width):
     y_offset = 150
     input_width = content_width - 240  # Diminui a largura das caixas de input
     input_x = menu_width + (content_width - input_width) // 2  # Centraliza as caixas de input
-    for i, label in enumerate(labels):
-        label_surf = font_small.render(label, True, white)
-        input_rect = pygame.Rect(input_x, y_offset + 70 * i, input_width, 40)  # Altura da caixa ajustada para 40
-        pygame.draw.rect(screen, white, input_rect, border_radius=5)
-        text_surf = font_medium.render(texts[i], True, black)
-        screen.blit(label_surf, (input_x, y_offset + 70 * i - 30))
-        text_x = input_rect.x + 10  # Posiciona o texto um pouco para a direita dentro da caixa
-        screen.blit(text_surf, (text_x, input_rect.y + (input_rect.height - text_surf.get_height()) // 2))
+
+        
+    label_surf = font_small.render(labels[0], True, white)
+    input_boxes_main['ativo'] = pygame.Rect(input_x, y_offset + 70 * 0, input_width, 40)  # Altura da caixa ajustada para 40
+    pygame.draw.rect(screen, white, input_boxes_main['ativo'], border_radius=5)
+    text_surf = font_medium.render(texts[0], True, black)
+    screen.blit(label_surf, (input_x, y_offset + 70 * 0 - 30))
+    text_x = input_boxes_main['ativo'].x + 10  # Posiciona o texto um pouco para a direita dentro da caixa
+    screen.blit(text_surf, (text_x, input_boxes_main['ativo'].y + (input_boxes_main['ativo'].height - text_surf.get_height()) // 2))
+
+    label_surf = font_small.render(labels[1], True, white)
+    input_boxes_main['quant'] = pygame.Rect(input_x, y_offset + 70 * 1, input_width, 40)  # Altura da caixa ajustada para 40
+    pygame.draw.rect(screen, white, input_boxes_main['quant'], border_radius=5)
+    text_surf = font_medium.render(texts[1], True, black)
+    screen.blit(label_surf, (input_x, y_offset + 70 * 1 - 30))
+    text_x = input_boxes_main['quant'].x + 10  # Posiciona o texto um pouco para a direita dentro da caixa
+    screen.blit(text_surf, (text_x, input_boxes_main['quant'].y + (input_boxes_main['quant'].height - text_surf.get_height()) // 2))
+
+    label_surf = font_small.render(labels[2], True, white)
+    input_boxes_main['p_medio'] = pygame.Rect(input_x, y_offset + 70 * 2, input_width, 40)  # Altura da caixa ajustada para 40
+    pygame.draw.rect(screen, white, input_boxes_main['p_medio'], border_radius=5)
+    text_surf = font_medium.render(texts[2], True, black)
+    screen.blit(label_surf, (input_x, y_offset + 70 * 2 - 30))
+    text_x = input_boxes_main['p_medio'].x + 10  # Posiciona o texto um pouco para a direita dentro da caixa
+    screen.blit(text_surf, (text_x, input_boxes_main['p_medio'].y + (input_boxes_main['p_medio'].height - text_surf.get_height()) // 2))
 
     # Botão para realizar a compra
-    buy_button_rect = pygame.Rect(input_x, y_offset + 70 * len(labels) + 10, input_width, 50)
-    pygame.draw.rect(screen, blue, buy_button_rect, border_radius=15)
+    button_box = pygame.Rect(input_x, y_offset + 70 * len(labels) + 10, input_width, 50)
+    pygame.draw.rect(screen, blue, button_box, border_radius=15)
     buy_button_text = font_medium.render("Registrar", True, white)
     buy_button_text_x = input_x + (input_width - buy_button_text.get_width()) // 2
-    screen.blit(buy_button_text, (buy_button_text_x, buy_button_rect.y + (buy_button_rect.height - buy_button_text.get_height()) // 2))
+    screen.blit(buy_button_text, (buy_button_text_x, button_box.y + (button_box.height - buy_button_text.get_height()) // 2))
 
     pygame.display.flip()
 
@@ -288,7 +316,7 @@ def show_transaction_history(menu_width, content_width):
     global search_text  # Assumindo que você tem uma variável global para o texto da busca
 
     # Carrega a imagem da lupa
-    search_icon = pygame.image.load('icons/pesquisa-de-lupa.png') 
+    search_icon = pygame.image.load('src/icons/pesquisa-de-lupa.png') 
     search_icon = pygame.transform.scale(search_icon, (20, 20))
 
     # Limpa a área de conteúdo
@@ -324,6 +352,11 @@ def show_transaction_history(menu_width, content_width):
 
     # Seleciona os dados da carteira e filtra se necessário
     transactions = bd.select_where("operations", id_cliente=logged_in_client_id)
+
+    if transactions == None:
+        draw_popup("Você não possui ativo em carteira")
+        return
+    
     if search_text:
         transactions = [item for item in transactions if search_text.lower() in item[3].lower()]  # Assume que item[3] é o ID do ativo
 
@@ -334,7 +367,7 @@ def show_transaction_history(menu_width, content_width):
 
     # Desenha o cabeçalho da tabela
     for i, header in enumerate(headers):
-        pygame.draw.rect(screen, white, (table_x + i * cell_width, table_y, cell_width, cell_height))
+        pygame.draw.rect(screen, light_purple, (table_x + i * cell_width, table_y, cell_width, cell_height))
         header_text = font_small.render(header, True, black)
         text_rect = header_text.get_rect(center=(table_x + i * cell_width + cell_width // 2, table_y + cell_height // 2))
         screen.blit(header_text, text_rect)
@@ -342,7 +375,7 @@ def show_transaction_history(menu_width, content_width):
     # Desenha os dados filtrados da carteira
     for i, row in enumerate(transactions):
         for j, value in enumerate(row):
-            pygame.draw.rect(screen, white, (table_x + j * cell_width, table_y + (i + 1) * cell_height, cell_width, cell_height))
+            pygame.draw.rect(screen, light_purple, (table_x + j * cell_width, table_y + (i + 1) * cell_height, cell_width, cell_height))
             cell_text = font_small.render(str(value), True, black)
             text_rect = cell_text.get_rect(center=(table_x + j * cell_width + cell_width // 2, table_y + (i + 1) * cell_height + cell_height // 2))
             screen.blit(cell_text, text_rect)
@@ -365,6 +398,10 @@ def show_wallet_summary(menu_width, content_width):
     # Seleciona os dados da carteira
     carteira = bd.select_where("wallets", id_cliente=logged_in_client_id)
 
+    if carteira == None:
+        draw_popup("Você não possui ativo em carteira")
+        return
+
     # Define o cabeçalho da tabela e calcula o comprimento da tabela
     headers = ["Ticker", "Quantidade", "Preço Médio", "Total"]
     cell_width = 135  # Largura de cada célula
@@ -375,15 +412,15 @@ def show_wallet_summary(menu_width, content_width):
 
     # Desenha o cabeçalho da tabela
     for i, header in enumerate(headers):
-        pygame.draw.rect(screen, white, (table_x + i * cell_width, table_y, cell_width, cell_height))
+        pygame.draw.rect(screen, light_purple, (table_x + i * cell_width, table_y, cell_width, cell_height))
         header_text = font_small.render(header, True, black)
         text_rect = header_text.get_rect(center=(table_x + i * cell_width + cell_width // 2, table_y + cell_height // 2))
         screen.blit(header_text, text_rect)
 
     # Desenha os dados da carteira
     for i, row in enumerate(carteira):
-        for j, value in enumerate(row[2:]):  # Adiciona o número da linha como primeira coluna
-            pygame.draw.rect(screen, white, (table_x + j * cell_width, table_y + (i + 1) * cell_height, cell_width, cell_height))
+        for j, value in enumerate(row[2:]): 
+            pygame.draw.rect(screen, light_purple, (table_x + j * cell_width, table_y + (i + 1) * cell_height, cell_width, cell_height))
             cell_text = font_small.render(str(value), True, black)
             text_rect = cell_text.get_rect(center=(table_x + j * cell_width + cell_width // 2, table_y + (i + 1) * cell_height + cell_height // 2))
             screen.blit(cell_text, text_rect)
@@ -507,7 +544,6 @@ def login_check(cpf, senha):
     # Verifica se o cpf e a senha correspondem a algum usuário no banco
     id_cliente = bd.search_especific_where("id_cliente", "clients", cpf=cpf, senha=senha)
     if id_cliente:
-        draw_popup("Login realizado com sucesso")
         logged_in_client_id = id_cliente  # Armazena o ID do cliente globalmente
         return True
     else:
@@ -515,9 +551,13 @@ def login_check(cpf, senha):
         return False
     
 input_user = {'user': False, 'pass': False, 'name': False, 'email': False, 'dob': False, 'cpf': False}
+input_main = {'ativo': False, 'quant': False, 'p_medio': False, 'search': False}
+
     
 def register_new_user(name, email, dob, cpf, senha):
     try:
+        global logged_in_client_id
+
         # Formata a data de nascimento
         dob_formatted = datetime.strptime(dob, "%d/%m/%Y").date()
         bd.inserir("clients", (name, email, dob_formatted, cpf, senha))
@@ -527,6 +567,23 @@ def register_new_user(name, email, dob, cpf, senha):
         reset_input_fields()
         
         return True
+    except Exception as e:
+        draw_popup(str(e))
+        return False
+    
+def register_buy(ticker, quant, p_medio):
+    try:
+        ## Verifica se o ativo já está contido em Wallets
+        in_wallet = bd.search_especific_where("ticker", "wallets", id_cliente=logged_in_client_id, ticker=ticker)
+        # Inicializamos o ativo em Wallet, caso ele não esteja
+        if in_wallet == None:
+            bd.inserir("wallets", (logged_in_client_id, ticker, quant, p_medio, quant* p_medio))
+        
+        bd.inserir("operations", (dt.now().date(), logged_in_client_id, ticker, 'C', quant, p_medio, quant* p_medio))
+        print(f"Compra cadastrada com sucesso!\n")
+
+        bd.update_wallets(logged_in_client_id)
+
     except Exception as e:
         draw_popup(str(e))
         return False
@@ -587,6 +644,24 @@ def handle_mouse_input(event):
                 selected_index = i
                 print(f"Button {i} clicked")  # Debug para acompanhar cliques
 
+    elif current_screen  == 'sale':
+        if input_boxes_main['ativo'].collidepoint(event.pos):
+            input_user['ativo'] = True 
+            reset_other_input_main('ativo')
+        elif input_boxes_main['quant'].collidepoint(event.pos):
+            input_user['quant'] = True 
+            reset_other_input_main('quant')
+        elif input_boxes_main['p_medio'].collidepoint(event.pos):
+            input_user['p_medio'] = True 
+            reset_other_input_main('p_medio')
+        elif button_box.collidepoint(event.pos):
+            if all([asset_code_text, quantity_text, dob_text, quantity_text]):
+                if register_buy(asset_code_text, quantity_text, dob_text, quantity_text):
+                    draw_popup("Compra cadastrada com sucesso")  # Debug
+            else:
+                draw_popup("Todos os campos devem ser preenchidos.")
+
+
     elif current_screen == "transaction_history":
         if search_box.collidepoint(event.pos):  # 'search_box' deve ser definido onde você desenha a tela de histórico
             input_search_active = True  # Ativa a entrada para a barra de busca
@@ -598,6 +673,12 @@ def reset_other_input_user(active_key):
     for key in input_user:
         if key != active_key:
             input_user[key] = False
+
+def reset_other_input_main(active_key):
+    global input_main
+    for key in input_main:
+        if key != active_key:
+            input_main[key] = False
 
 def reset_all_input_user():
     global input_user
