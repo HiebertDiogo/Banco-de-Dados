@@ -7,11 +7,11 @@ def main():
     # Chama o menu principal para iniciar a aplicação
     interface.menu_principal()
 
-    # bd = Bd_postgres()
-    # bd.create_connection() 
-    # bd.create_procedure_truncate()
-    # bd.truncate_table("operations")
-    # bd.disconnect()
+    bd = Bd_postgres()
+    bd.create_connection() 
+    bd.create_procedure_truncate()
+    bd.truncate_table("operations")
+    bd.disconnect()
 
 if __name__ == "__main__":
     main()
