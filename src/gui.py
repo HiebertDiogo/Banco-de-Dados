@@ -18,7 +18,7 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("Carteira de Investimentos")
 
 # Carregar e configurar a fonte
-font_path = os.path.join('fonts', 'Poppins-Regular.ttf')
+font_path = os.path.join('src/fonts', 'Poppins-Regular.ttf')
 font_small = pygame.font.Font(font_path, 16)
 font_medium = pygame.font.Font(font_path, 20)
 font_large = pygame.font.Font(font_path, 40)
@@ -288,7 +288,7 @@ def show_transaction_history(menu_width, content_width):
     global search_text  # Assumindo que você tem uma variável global para o texto da busca
 
     # Carrega a imagem da lupa
-    search_icon = pygame.image.load('icons/pesquisa-de-lupa.png') 
+    search_icon = pygame.image.load('src/icons/pesquisa-de-lupa.png') 
     search_icon = pygame.transform.scale(search_icon, (20, 20))
 
     # Limpa a área de conteúdo
@@ -311,7 +311,7 @@ def show_transaction_history(menu_width, content_width):
     # Coloca o ícone da lupa
     screen.blit(search_icon, (search_box.x + 10, search_box.y + 10))  # Ajuste a posição conforme necessário
 
-    # Texto de buscac
+    # Texto de busca
     
     search_text_display = font_small.render(search_text, True, black)
     screen.blit(search_text_display, (search_box.x + 40, search_box.y + 10))  # Ajusta o texto para a direita da lupa
@@ -322,27 +322,27 @@ def show_transaction_history(menu_width, content_width):
     # Ajusta a altura inicial da tabela para baixo da barra de busca
     table_y = 200 
 
-    # Seleciona os dados da carteira e filtra se necessário
-    transactions = bd.select_where("operations", id_cliente=logged_in_client_id)
-    if search_text:
-        transactions = [item for item in transactions if search_text.lower() in item[3].lower()]  # Assume que item[3] é o ID do ativo
+ # Seleciona os dados da carteira
+    carteira = bd.select_where("operations", id_cliente=logged_in_client_id)
 
     # Define o cabeçalho da tabela e calcula o comprimento da tabela
-    headers = ["ID", "Data", "Ticker", "Operação", "Quantidade", "Preço", "Total"]
-    cell_width = (content_width - 5) // len(headers)  # Calcula a largura de cada célula
-    table_x = menu_width + (content_width - len(headers) * cell_width) // 2  # Centraliza a tabela horizontalmente
+    headers = ["ID", "Data", "ID_cliente", "Ticker", "Operacao", "Quant", "Price", "Total"]
+    # Define o cabeçalho da tabela e calcula o comprimento da célula
+    num_columns = len(headers)
+    cell_width = (content_width - 5) // num_columns  # Calcula a largura da célula
+    table_x = menu_width + (content_width - num_columns * cell_width) // 2  # A posição x da tabela começa no canto esquerdo do menu
 
     # Desenha o cabeçalho da tabela
     for i, header in enumerate(headers):
-        pygame.draw.rect(screen, white, (table_x + i * cell_width, table_y, cell_width, cell_height))
+        pygame.draw.rect(screen, light_purple, (table_x + i * cell_width, table_y, cell_width, cell_height))
         header_text = font_small.render(header, True, black)
         text_rect = header_text.get_rect(center=(table_x + i * cell_width + cell_width // 2, table_y + cell_height // 2))
         screen.blit(header_text, text_rect)
 
-    # Desenha os dados filtrados da carteira
-    for i, row in enumerate(transactions):
+    # Desenha os dados da carteira
+    for i, row in enumerate(carteira):
         for j, value in enumerate(row):
-            pygame.draw.rect(screen, white, (table_x + j * cell_width, table_y + (i + 1) * cell_height, cell_width, cell_height))
+            pygame.draw.rect(screen, light_purple, (table_x + j * cell_width, table_y + (i + 1) * cell_height, cell_width, cell_height))
             cell_text = font_small.render(str(value), True, black)
             text_rect = cell_text.get_rect(center=(table_x + j * cell_width + cell_width // 2, table_y + (i + 1) * cell_height + cell_height // 2))
             screen.blit(cell_text, text_rect)
@@ -365,6 +365,10 @@ def show_wallet_summary(menu_width, content_width):
     # Seleciona os dados da carteira
     carteira = bd.select_where("wallets", id_cliente=logged_in_client_id)
 
+    if carteira == None:
+        draw_popup("Você não pissuí ativos em carteira")
+        return
+
     # Define o cabeçalho da tabela e calcula o comprimento da tabela
     headers = ["Ticker", "Quantidade", "Preço Médio", "Total"]
     cell_width = 135  # Largura de cada célula
@@ -375,7 +379,7 @@ def show_wallet_summary(menu_width, content_width):
 
     # Desenha o cabeçalho da tabela
     for i, header in enumerate(headers):
-        pygame.draw.rect(screen, white, (table_x + i * cell_width, table_y, cell_width, cell_height))
+        pygame.draw.rect(screen, light_purple, (table_x + i * cell_width, table_y, cell_width, cell_height))
         header_text = font_small.render(header, True, black)
         text_rect = header_text.get_rect(center=(table_x + i * cell_width + cell_width // 2, table_y + cell_height // 2))
         screen.blit(header_text, text_rect)
@@ -383,7 +387,7 @@ def show_wallet_summary(menu_width, content_width):
     # Desenha os dados da carteira
     for i, row in enumerate(carteira):
         for j, value in enumerate(row[2:]):  # Adiciona o número da linha como primeira coluna
-            pygame.draw.rect(screen, white, (table_x + j * cell_width, table_y + (i + 1) * cell_height, cell_width, cell_height))
+            pygame.draw.rect(screen, light_purple, (table_x + j * cell_width, table_y + (i + 1) * cell_height, cell_width, cell_height))
             cell_text = font_small.render(str(value), True, black)
             text_rect = cell_text.get_rect(center=(table_x + j * cell_width + cell_width // 2, table_y + (i + 1) * cell_height + cell_height // 2))
             screen.blit(cell_text, text_rect)
@@ -507,7 +511,6 @@ def login_check(cpf, senha):
     # Verifica se o cpf e a senha correspondem a algum usuário no banco
     id_cliente = bd.search_especific_where("id_cliente", "clients", cpf=cpf, senha=senha)
     if id_cliente:
-        draw_popup("Login realizado com sucesso")
         logged_in_client_id = id_cliente  # Armazena o ID do cliente globalmente
         return True
     else:
