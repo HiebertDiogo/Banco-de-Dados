@@ -49,6 +49,7 @@ asset_code_text = ''
 quantity_text = ''
 average_price_text = ''
 account_number_text = ''
+search_text = ''
 button_rects = []
 
 # Ativação de inputs
@@ -284,6 +285,12 @@ def perform_sale(menu_width, content_width):
 
 
 def show_transaction_history(menu_width, content_width):
+    global search_text  # Assumindo que você tem uma variável global para o texto da busca
+
+    # Carrega a imagem da lupa
+    search_icon = pygame.image.load('icons/pesquisa-de-lupa.png') 
+    search_icon = pygame.transform.scale(search_icon, (20, 20))
+
     # Limpa a área de conteúdo
     pygame.draw.rect(screen, purple, [menu_width, 0, content_width, screen_height])
 
@@ -292,17 +299,38 @@ def show_transaction_history(menu_width, content_width):
     header_x = menu_width + (content_width - header_text.get_width()) // 2  # Centraliza o cabeçalho
     screen.blit(header_text, (header_x, 70))
 
-    # Seleciona os dados da carteira
-    carteira = bd.select_where("operations", id_cliente=logged_in_client_id)
+    # Barra de busca
+    search_box = pygame.Rect(menu_width + 50, 130, content_width - 100, 40)  # Ajuste conforme necessário
+    mouse_pos = pygame.mouse.get_pos()
+    mouse_pressed = pygame.mouse.get_pressed()
+
+    # Determina a cor da borda baseada na interação do mouse
+    border_color = blue if mouse_pressed[0] and search_box.collidepoint(mouse_pos) else white
+    pygame.draw.rect(screen, border_color, search_box, 2, border_radius=5)
+
+    # Coloca o ícone da lupa
+    screen.blit(search_icon, (search_box.x + 10, search_box.y + 10))  # Ajuste a posição conforme necessário
+
+    # Texto de buscac
+    
+    search_text_display = font_small.render(search_text, True, black)
+    screen.blit(search_text_display, (search_box.x + 40, search_box.y + 10))  # Ajusta o texto para a direita da lupa
+
+    # Define a altura da célula
+    cell_height = 40
+
+    # Ajusta a altura inicial da tabela para baixo da barra de busca
+    table_y = 200 
+
+    # Seleciona os dados da carteira e filtra se necessário
+    transactions = bd.select_where("operations", id_cliente=logged_in_client_id)
+    if search_text:
+        transactions = [item for item in transactions if search_text.lower() in item[3].lower()]  # Assume que item[3] é o ID do ativo
 
     # Define o cabeçalho da tabela e calcula o comprimento da tabela
-    headers = ["ID", "Data", "ID_cliente", "Ticker", "Operacao", "Quant", "Price", "Total"]
-    # Define o cabeçalho da tabela e calcula o comprimento da célula
-    num_columns = len(headers)
-    cell_width = (content_width - 5) // num_columns  # Calcula a largura da célula
-    table_x = menu_width + (content_width - num_columns * cell_width) // 2  # A posição x da tabela começa no canto esquerdo do menu
-    table_y = 150
-    cell_height = 30
+    headers = ["ID", "Data", "Ticker", "Operação", "Quantidade", "Preço", "Total"]
+    cell_width = (content_width - 5) // len(headers)  # Calcula a largura de cada célula
+    table_x = menu_width + (content_width - len(headers) * cell_width) // 2  # Centraliza a tabela horizontalmente
 
     # Desenha o cabeçalho da tabela
     for i, header in enumerate(headers):
@@ -311,8 +339,8 @@ def show_transaction_history(menu_width, content_width):
         text_rect = header_text.get_rect(center=(table_x + i * cell_width + cell_width // 2, table_y + cell_height // 2))
         screen.blit(header_text, text_rect)
 
-    # Desenha os dados da carteira
-    for i, row in enumerate(carteira):
+    # Desenha os dados filtrados da carteira
+    for i, row in enumerate(transactions):
         for j, value in enumerate(row):
             pygame.draw.rect(screen, white, (table_x + j * cell_width, table_y + (i + 1) * cell_height, cell_width, cell_height))
             cell_text = font_small.render(str(value), True, black)
@@ -320,6 +348,7 @@ def show_transaction_history(menu_width, content_width):
             screen.blit(cell_text, text_rect)
 
     pygame.display.flip()
+
 ########################################################################################################################
 ########################################################################################################################
 
@@ -512,7 +541,7 @@ def reset_input_fields():
     cpf_text = ''
 
 def handle_mouse_input(event):
-    global current_screen, selected_index, logged_in_client_id
+    global current_screen, selected_index, logged_in_client_id, input_search_active, search_box
     if current_screen == "login":
         if register_text_box.collidepoint(event.pos):  # Verifica se o clique foi no link "Cadastre-se"
             current_screen = "register"  # Muda para a tela de registro
@@ -558,6 +587,12 @@ def handle_mouse_input(event):
                 selected_index = i
                 print(f"Button {i} clicked")  # Debug para acompanhar cliques
 
+    elif current_screen == "transaction_history":
+        if search_box.collidepoint(event.pos):  # 'search_box' deve ser definido onde você desenha a tela de histórico
+            input_search_active = True  # Ativa a entrada para a barra de busca
+        else:
+            input_search_active = False
+
 def reset_other_input_user(active_key):
     global input_user
     for key in input_user:
@@ -570,7 +605,7 @@ def reset_all_input_user():
         input_user[key] = False
 
 def handle_key_input(event):
-    global user_text, pass_text, name_text, email_text, dob_text, cpf_text  
+    global user_text, pass_text, name_text, email_text, dob_text, cpf_text, input_search_active, search_text
 
     if current_screen == "login":
         if input_user['user']:
@@ -609,6 +644,14 @@ def handle_key_input(event):
                 pass_text = pass_text[:-1]
             else:
                 pass_text += event.unicode
+    
+    if current_screen == "transaction_history" and input_search_active:
+        if event.key == pygame.K_BACKSPACE:
+            search_text = search_text[:-1]
+        elif event.key == pygame.K_RETURN:
+            input_search_active = False  # Desativa a busca ao pressionar Enter
+        else:
+            search_text += event.unicode
 
 def main():
     global current_screen, selected_index
